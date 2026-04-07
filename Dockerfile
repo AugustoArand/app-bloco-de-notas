@@ -25,7 +25,7 @@ RUN apt-get update -qq && \
 
 COPY backend/Gemfile backend/Gemfile.lock ./
 
-RUN gem install bundler -v "$(grep -A 1 'BUNDLED WITH' Gemfile.lock | tail -1 | tr -d ' ')" && \
+RUN gem install bundler -v 2.7.2 && \
     bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile -j 1 --gemfile
