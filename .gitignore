@@ -49,7 +49,6 @@ build/
 
 # ── Docker ─────────────────────────────────────
 .dockerignore
-Dockerfile
 
 # ── Kamal / Deploy ────────────────────────────
 .kamal/lock
