@@ -1,0 +1,51 @@
+# =============================================
+# NoteVault Backend — Rails .gitignore
+# =============================================
+
+# ── Bundler ───────────────────────────────────
+/.bundle
+/vendor/bundle
+
+# ── Variáveis de ambiente & Credenciais ───────
+/.env*
+!/.env.example
+/config/*.key
+/config/credentials/*.key
+
+# ── Logs e temporários ────────────────────────
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# ── PIDs ──────────────────────────────────────
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# ── Storage (uploads e SQLite dev) ────────────
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+
+# ── Banco de dados SQLite (desenvolvimento) ───
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# ── Assets compilados ─────────────────────────
+/public/assets
+/public/packs
+/public/packs-test
+
+# ── Spring (preloader) ────────────────────────
+/.spring
+
+# ── Yarn ──────────────────────────────────────
+/node_modules
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity

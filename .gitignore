@@ -1,0 +1,56 @@
+# =============================================
+# NoteVault — Root .gitignore
+# =============================================
+
+# ── Ambiente & Segredos ───────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ── Sistema Operacional ───────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Editores ──────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# ── Ruby LSP / Solargraph ─────────────────────
+.ruby-lsp/
+.solargraph/
+sorbet/
+
+# ── Logs genéricos ────────────────────────────
+*.log
+log/
+tmp/
+
+# ── Dependências e Build ──────────────────────
+node_modules/
+dist/
+build/
+.vite/
+.output/
+
+# ── Docker ─────────────────────────────────────
+.dockerignore
+Dockerfile
+
+# ── Kamal / Deploy ────────────────────────────
+.kamal/lock
+.kamal/logs
