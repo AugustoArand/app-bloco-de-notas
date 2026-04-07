@@ -1,11 +1,10 @@
 allowed_origins = [
   "http://localhost:5173",
-  "http://127.0.0.1:5173"
+  "http://127.0.0.1:5173",
+  /\Ahttps:\/\/.*\.vercel\.app\z/
 ]
 
-if (frontend_url = ENV["FRONTEND_URL"].to_s.strip) && !frontend_url.empty?
-  allowed_origins << frontend_url
-end
+allowed_origins << ENV["FRONTEND_URL"].strip if ENV["FRONTEND_URL"].present?
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
