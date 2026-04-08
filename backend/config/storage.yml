@@ -20,9 +20,9 @@ local:
 # ─────────────────────────────────────────────
 cloudflare_r2:
   service: S3
-  access_key_id: <%= ENV["CLOUDFLARE_R2_ACCESS_KEY_ID"] %>
-  secret_access_key: <%= ENV["CLOUDFLARE_R2_SECRET_ACCESS_KEY"] %>
+  access_key_id: <%= ENV["CLOUDFLARE_R2_ACCESS_KEY_ID"].to_s.gsub(/\A['\"]|['\"]\z/, "") %>
+  secret_access_key: <%= ENV["CLOUDFLARE_R2_SECRET_ACCESS_KEY"].to_s.gsub(/\A['\"]|['\"]\z/, "") %>
   region: auto
-  bucket: <%= ENV["CLOUDFLARE_R2_BUCKET"] %>
-  endpoint: https://<%= ENV["CLOUDFLARE_ACCOUNT_ID"] %>.r2.cloudflarestorage.com
+  bucket: <%= ENV["CLOUDFLARE_R2_BUCKET"].to_s.gsub(/\A['\"]|['\"]\z/, "") %>
+  endpoint: https://<%= ENV["CLOUDFLARE_ACCOUNT_ID"].to_s.gsub(/\A['\"]|['\"]\z/, "") %>.r2.cloudflarestorage.com
   force_path_style: true
