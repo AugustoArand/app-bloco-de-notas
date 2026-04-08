@@ -57,10 +57,15 @@ module Api
       end
 
       def upload_image
-        @note = current_user.notes.find(params[:note_id])
+        @note = current_user.notes.find(params[:id])
         image = params[:image]
+
+        if image.blank?
+          return render json: { errors: ["Imagem não enviada."] }, status: :unprocessable_entity
+        end
+
         @note.images.attach(image)
-        url = url_for(@note.images.last)
+        url = absolute_asset_url(@note.images.last)
         render json: { url: url }, status: :created
       rescue ActiveRecord::RecordNotFound
         not_found
@@ -100,7 +105,7 @@ module Api
 
       def note_full_json(note)
         images = note.images.map do |img|
-          { id: img.id, url: url_for(img) }
+          { id: img.id, url: absolute_asset_url(img) }
         end
 
         {
@@ -115,6 +120,13 @@ module Api
           created_at: note.created_at,
           updated_at: note.updated_at
         }
+      end
+
+      def absolute_asset_url(asset)
+        generated = url_for(asset)
+        return generated if generated.start_with?("http://", "https://")
+
+        "#{request.base_url}#{generated}"
       end
     end
   end

@@ -128,6 +128,13 @@ const availableTags = computed(() => {
   return tagsStore.tags.filter(t => !noteTIds.has(t.id))
 })
 
+function sanitizeEditorContent(html) {
+  if (!html) return ''
+
+  // Remove image tags that use unsupported/local-only URL schemes.
+  return html.replace(/<img\b[^>]*\bsrc=["'](attachment:|blob:)[^"']*["'][^>]*>/gi, '')
+}
+
 async function addTagToNote(tag) {
   if (!note.value) return
   const currentIds = (note.value.tags || []).map(t => t.id)
@@ -193,7 +200,7 @@ async function loadNote(id) {
   note.value = data
   noteTitle.value = data.title || ''
   if (editor.value) {
-    editor.value.commands.setContent(data.content || '')
+    editor.value.commands.setContent(sanitizeEditorContent(data.content || ''))
   }
   lastSaved.value = false
   if (!tagsStore.tags.length) tagsStore.fetch()
@@ -204,9 +211,10 @@ function debounceSave() {
   lastSaved.value = false
   saveTimeout = setTimeout(async () => {
     if (!note.value) return
+    const safeContent = sanitizeEditorContent(editor.value?.getHTML() || '')
     await notesStore.save(note.value.id, {
       title: noteTitle.value,
-      content: editor.value?.getHTML() || ''
+      content: safeContent
     })
     lastSaved.value = true
     setTimeout(() => { lastSaved.value = false }, 3000)
