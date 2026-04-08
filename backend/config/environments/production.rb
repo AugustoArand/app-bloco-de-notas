@@ -24,11 +24,9 @@ Rails.application.configure do
   # Railway termina SSL no proxy — informar ao Rails que já está em HTTPS
   config.assume_ssl = true
 
-  # Redirecionar HTTP → HTTPS e ativar HSTS
-  config.force_ssl = true
-
-  # Excluir health check do redirecionamento SSL
-  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # force_ssl desabilitado: Railway já faz SSL termination no load balancer.
+  # Deixar ligado causava ActionDispatch::SSL redirect que quebrava o preflight CORS.
+  # config.force_ssl = true
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]
