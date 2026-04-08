@@ -11,7 +11,7 @@
         v-for="item in headings"
         :key="item.id"
         :class="['toc-item', `level-${item.level}`, { active: activeId === item.id }]"
-        @click="scrollTo(item.id)"
+        @click="scrollTo(item)"
       >
         {{ item.text }}
       </li>
@@ -42,10 +42,12 @@ function extractHeadings() {
   headings.value = items
 }
 
-function scrollTo(id) {
-  const el = document.querySelector(`[data-toc-id="${id}"]`)
-  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  activeId.value = id
+function scrollTo(item) {
+  if (!props.editor || !item) return
+
+  const targetPos = Math.max(item.pos + 1, 1)
+  props.editor.chain().focus().setTextSelection(targetPos).scrollIntoView().run()
+  activeId.value = item.id
 }
 
 watch(() => props.editor?.state, () => {
