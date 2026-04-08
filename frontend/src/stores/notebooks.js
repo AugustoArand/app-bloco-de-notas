@@ -23,7 +23,7 @@ export const useNotebooksStore = defineStore('notebooks', {
 
     async create(name) {
       const res = await api.post('/api/v1/notebooks', { notebook: { name } })
-      this.notebooks.unshift(res.data)
+      this.notebooks = [res.data, ...this.notebooks]
       return res.data
     },
 
@@ -37,6 +37,26 @@ export const useNotebooksStore = defineStore('notebooks', {
     async remove(id) {
       await api.delete(`/api/v1/notebooks/${id}`)
       this.notebooks = this.notebooks.filter(n => n.id !== id)
+    },
+
+    async toggleFavorite(id) {
+      const nb = this.notebooks.find(n => n.id === id)
+      if (!nb) return
+
+      const res = await api.patch(`/api/v1/notebooks/${id}`, {
+        notebook: { favorite: !nb.favorite }
+      })
+
+      this.notebooks = this.notebooks
+        .map(n => (n.id === id ? res.data : n))
+        .sort((a, b) => {
+          if (a.favorite === b.favorite) {
+            return new Date(b.updated_at) - new Date(a.updated_at)
+          }
+          return a.favorite ? -1 : 1
+        })
+
+      return res.data
     }
   }
 })

@@ -90,7 +90,11 @@ module Api
       end
 
       def note_params
-        params.require(:note).permit(:title, :content)
+        permitted = params.require(:note).permit(:title, :content)
+        if params.dig(:note, :diagram_data).present?
+          permitted[:diagram_data] = params[:note][:diagram_data]
+        end
+        permitted
       end
 
       def note_summary_json(note)
@@ -116,6 +120,7 @@ module Api
           id: note.id,
           title: note.title,
           content: note.content,
+          diagram_data: note.diagram_data || { nodes: [], edges: [] },
           notebook_id: note.notebook_id,
           notebook_name: note.notebook.name,
           tags: note.tags.map { |t| { id: t.id, name: t.name, color: t.color } },

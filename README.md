@@ -32,7 +32,7 @@ cd backend
 bundle install
 rails db:migrate
 rails db:seed   # cria usuário de teste
-rails server    # http://localhost:3000
+rails server    # http://localhost:8080
 ```
 
 **Usuário de teste:** `teste@notevault.com` / `123456`

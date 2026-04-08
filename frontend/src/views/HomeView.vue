@@ -135,6 +135,16 @@
           class="nb-card"
           @click="openNotebook(nb)"
         >
+          <button
+            class="nb-favorite"
+            :class="{ active: nb.favorite }"
+            :title="nb.favorite ? 'Remover dos favoritos' : 'Favoritar caderno'"
+            @click.stop="toggleFavorite(nb.id)"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+          </button>
           <div class="nb-icon">
             <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
               <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
@@ -197,8 +207,6 @@ const showTagManager = ref(false)
 const coverInput = ref(null)
 const coverImage = ref(null)
 
-const COVER_KEY = computed(() => `notevault_cover_${auth.user?.id || 'guest'}`)
-
 const coverStyle = computed(() => {
   if (coverImage.value) {
     return { backgroundImage: `url(${coverImage.value})`, backgroundSize: 'cover', backgroundPosition: 'center' }
@@ -213,18 +221,35 @@ function triggerCoverPick() {
 function onCoverSelected(e) {
   const file = e.target.files?.[0]
   if (!file) return
-  const reader = new FileReader()
-  reader.onload = (ev) => {
-    coverImage.value = ev.target.result
-    localStorage.setItem(COVER_KEY.value, ev.target.result)
-  }
-  reader.readAsDataURL(file)
+
+  const preview = URL.createObjectURL(file)
+  coverImage.value = preview
+
+  auth.uploadCover(file)
+    .then((url) => {
+      coverImage.value = url
+      URL.revokeObjectURL(preview)
+    })
+    .catch(() => {
+      coverImage.value = auth.user?.cover_image_url || null
+      URL.revokeObjectURL(preview)
+    })
+
   e.target.value = ''
 }
 
 function removeCover() {
-  coverImage.value = null
-  localStorage.removeItem(COVER_KEY.value)
+  auth.removeCover()
+    .then(() => {
+      coverImage.value = null
+    })
+    .catch(() => {
+      // keep current cover when remove request fails
+    })
+}
+
+async function toggleFavorite(notebookId) {
+  await notebooks.toggleFavorite(notebookId)
 }
 
 
@@ -275,13 +300,14 @@ function openNotebook(nb) {
 }
 
 onMounted(async () => {
+  await auth.refreshProfile()
+
   await Promise.all([
     notesStore.fetchRecent(),
     tagsStore.fetch()
   ])
-  // Load saved cover
-  const saved = localStorage.getItem(COVER_KEY.value)
-  if (saved) coverImage.value = saved
+
+  coverImage.value = auth.user?.cover_image_url || null
 })
 </script>
 
@@ -502,6 +528,7 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  position: relative;
 }
 .nb-card:hover {
   border-color: rgba(59,130,246,0.4);
@@ -522,6 +549,33 @@ onMounted(async () => {
 .nb-date { font-size: 11px; color: var(--text-3); flex-shrink: 0; }
 .nb-arrow { color: var(--text-3); flex-shrink: 0; opacity: 0; transition: opacity var(--transition), transform var(--transition); }
 .nb-card:hover .nb-arrow { opacity: 1; transform: translateX(2px); }
+
+.nb-favorite {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.nb-favorite:hover {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.nb-favorite.active {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.16);
+}
 
 /* ── Empty states ── */
 .empty-recent, .empty-home {

@@ -45,10 +45,25 @@
         id="toolbar-highlight"
         class="tool-btn"
         :class="{ active: editor.isActive('highlight') }"
-        @click="editor.chain().focus().toggleHighlight().run()"
+        @click="editor.chain().focus().toggleHighlight({ color: '#7c3aed33' }).run()"
         title="Destaque"
       >
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </button>
+      <button
+        v-for="color in highlightColors"
+        :key="color"
+        class="highlight-swatch"
+        :style="{ backgroundColor: color }"
+        @click="applyHighlight(color)"
+        :title="`Aplicar destaque ${color}`"
+      ></button>
+      <button
+        class="tool-btn"
+        @click="editor.chain().focus().unsetHighlight().run()"
+        title="Remover destaque"
+      >
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
 
@@ -144,6 +159,16 @@
 
     <!-- Save indicator -->
     <div class="toolbar-right">
+      <button
+        id="toolbar-export-pdf"
+        class="tool-btn export-btn"
+        @click="$emit('export-pdf')"
+        title="Exportar para PDF"
+      >
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M8 13h3"/><path d="M8 17h8"/></svg>
+        <span class="export-label">PDF</span>
+      </button>
+
       <span v-if="saving" class="save-indicator saving">
         <div class="spinner" style="width:12px;height:12px;border-width:1.5px"></div>
         Salvando...
@@ -163,7 +188,8 @@ const props = defineProps({
   lastSaved: Boolean
 })
 
-const emit = defineEmits(['insert-image'])
+const emit = defineEmits(['insert-image', 'export-pdf'])
+const highlightColors = ['#7c3aed33', '#22c55e33', '#f59e0b33', '#3b82f633']
 
 function applyHeading(level) {
   if (level === '0') {
@@ -177,6 +203,10 @@ function insertImage(event) {
   const file = event.target.files[0]
   if (file) emit('insert-image', file)
   event.target.value = ''
+}
+
+function applyHighlight(color) {
+  props.editor.chain().focus().setHighlight({ color }).run()
 }
 </script>
 
@@ -226,6 +256,21 @@ function insertImage(event) {
   color: var(--purple-2);
 }
 
+.highlight-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid rgba(226, 228, 240, 0.35);
+  cursor: pointer;
+  margin: 0 1px;
+  transition: transform var(--transition), border-color var(--transition);
+}
+
+.highlight-swatch:hover {
+  transform: scale(1.1);
+  border-color: rgba(226, 228, 240, 0.8);
+}
+
 .heading-select {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -247,6 +292,27 @@ function insertImage(event) {
   margin-left: auto;
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.export-btn {
+  width: auto;
+  padding: 0 10px;
+  gap: 6px;
+  color: var(--purple-3);
+  border: 1px solid rgba(124, 58, 237, 0.4);
+  background: rgba(124, 58, 237, 0.12);
+}
+
+.export-btn:hover {
+  background: rgba(124, 58, 237, 0.2);
+  color: #ddd6fe;
+}
+
+.export-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .save-indicator {

@@ -8,11 +8,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
     if resource.persisted?
       render json: {
         message: "Cadastro realizado com sucesso.",
-        user: {
-          id: resource.id,
-          name: resource.name,
-          email: resource.email
-        }
+        user: user_json(resource)
       }, status: :created
     else
       clean_up_passwords resource
@@ -27,17 +23,22 @@ class Users::RegistrationsController < Devise::RegistrationsController
 
   private
 
+  def user_json(user)
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      cover_image_url: user.cover_image.attached? ? url_for(user.cover_image) : nil
+    }
+  end
+
   def respond_with(resource, _opts = {})
     if request.method == "DELETE"
       render json: { message: "Conta removida com sucesso." }, status: :ok
     elsif resource.persisted?
       render json: {
         message: "Cadastro realizado com sucesso.",
-        user: {
-          id: resource.id,
-          name: resource.name,
-          email: resource.email
-        }
+        user: user_json(resource)
       }, status: :created
     else
       render json: {

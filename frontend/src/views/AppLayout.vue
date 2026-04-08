@@ -33,7 +33,10 @@ watch(
 )
 
 onMounted(() => {
-  if (auth.isLoggedIn) notebooks.fetch()
+  if (auth.isLoggedIn) {
+    auth.refreshProfile()
+    notebooks.fetch()
+  }
 })
 </script>
 
@@ -50,4 +53,5 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
+
 </style>

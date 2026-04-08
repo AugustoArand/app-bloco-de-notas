@@ -60,6 +60,35 @@ export const useAuthStore = defineStore('auth', {
       }
 
       return true
+    },
+
+    async refreshProfile() {
+      try {
+        const res = await api.get('/api/v1/me')
+        this.user = { ...this.user, ...res.data }
+        localStorage.setItem('user', JSON.stringify(this.user))
+      } catch (_e) {
+        // Keep local profile when refresh fails.
+      }
+    },
+
+    async uploadCover(file) {
+      const form = new FormData()
+      form.append('image', file)
+      const res = await api.post('/api/v1/users/cover', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+
+      this.user = { ...this.user, ...res.data.user }
+      localStorage.setItem('user', JSON.stringify(this.user))
+      return res.data.cover_image_url
+    },
+
+    async removeCover() {
+      const res = await api.delete('/api/v1/users/cover')
+      this.user = { ...this.user, ...res.data.user }
+      localStorage.setItem('user', JSON.stringify(this.user))
+      return true
     }
   }
 })

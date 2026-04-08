@@ -14,6 +14,8 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       get "me", to: "users#me"
+      post "users/cover", to: "users#upload_cover"
+      delete "users/cover", to: "users#remove_cover"
 
       resources :tags
 

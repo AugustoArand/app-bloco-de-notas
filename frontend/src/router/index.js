@@ -15,6 +15,18 @@ const routes = [
     meta: { public: true }
   },
   {
+    path: '/about',
+    name: 'about',
+    component: () => import('@/views/AboutView.vue'),
+    meta: { public: true }
+  },
+  {
+    path: '/contact',
+    name: 'contact',
+    component: () => import('@/views/ContactView.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/',
     component: () => import('@/views/AppLayout.vue'),
     meta: { requiresAuth: true },

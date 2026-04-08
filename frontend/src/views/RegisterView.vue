@@ -1,5 +1,9 @@
 <template>
   <div class="auth-page">
+    <div class="auth-topbar">
+      <SystemHeader compact />
+    </div>
+
     <div class="orb orb-1"></div>
     <div class="orb orb-2"></div>
 
@@ -14,7 +18,7 @@
             <line x1="10" y1="9" x2="8" y2="9"/>
           </svg>
         </div>
-        <span class="logo-text">NoteVault</span>
+        <span class="logo-text">DuckNotes</span>
       </div>
 
       <h1 class="auth-title">Criar conta</h1>
@@ -54,6 +58,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import SystemHeader from '@/components/SystemHeader.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -78,6 +83,14 @@ async function handleRegister() {
   background: var(--bg);
   position: relative;
   overflow: hidden;
+}
+.auth-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 0 20px;
 }
 .orb {
   position: absolute;
@@ -132,6 +145,7 @@ async function handleRegister() {
   font-size: 20px;
   font-weight: 700;
   background: linear-gradient(to right, var(--purple-2), var(--purple-3));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

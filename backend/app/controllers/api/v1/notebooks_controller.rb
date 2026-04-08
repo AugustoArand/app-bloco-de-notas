@@ -43,13 +43,14 @@ module Api
       end
 
       def notebook_params
-        params.require(:notebook).permit(:name)
+        params.require(:notebook).permit(:name, :favorite)
       end
 
       def notebook_json(notebook)
         {
           id: notebook.id,
           name: notebook.name,
+          favorite: notebook.favorite,
           notes_count: notebook.notes.count,
           created_at: notebook.created_at,
           updated_at: notebook.updated_at

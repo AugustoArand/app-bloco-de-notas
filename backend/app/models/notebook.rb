@@ -4,5 +4,5 @@ class Notebook < ApplicationRecord
 
   validates :name, presence: true
 
-  default_scope { order(created_at: :desc) }
+  default_scope { order(favorite: :desc, updated_at: :desc) }
 end

@@ -6,6 +6,7 @@
       :saving="notesStore.saving"
       :last-saved="lastSaved"
       @insert-image="handleImageUpload"
+      @export-pdf="handleExportPdf"
     />
 
     <!-- Main editor area -->
@@ -29,6 +30,23 @@
             <span class="meta-item" v-if="wordCount > 0">
               {{ wordCount }} palavras
             </span>
+          </div>
+
+          <div class="editor-modes">
+            <button
+              class="mode-btn"
+              :class="{ active: editorMode === 'text' }"
+              @click="editorMode = 'text'"
+            >
+              Texto
+            </button>
+            <button
+              class="mode-btn"
+              :class="{ active: editorMode === 'board' }"
+              @click="editorMode = 'board'"
+            >
+              Quadro
+            </button>
           </div>
 
           <!-- Tags panel -->
@@ -63,7 +81,12 @@
         </div>
 
         <!-- Tiptap editor -->
-        <editor-content :editor="editor" class="tiptap-content" />
+        <editor-content v-if="editorMode === 'text'" :editor="editor" class="tiptap-content" />
+        <MindMapBoard
+          v-else
+          v-model="diagramData"
+          @update:model-value="handleDiagramUpdate"
+        />
       </div>
 
       <!-- Table of Contents -->
@@ -105,10 +128,12 @@ import TextAlign from '@tiptap/extension-text-align'
 import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import CharacterCount from '@tiptap/extension-character-count'
+import { jsPDF } from 'jspdf'
 
 import EditorToolbar from '@/components/EditorToolbar.vue'
 import TableOfContents from '@/components/TableOfContents.vue'
 import TagBadge from '@/components/TagBadge.vue'
+import MindMapBoard from '@/components/MindMapBoard.vue'
 import { useNotesStore } from '@/stores/notes'
 import { useTagsStore } from '@/stores/tags'
 
@@ -120,7 +145,10 @@ const note = ref(null)
 const noteTitle = ref('')
 const lastSaved = ref(false)
 const showTagPicker = ref(false)
+const editorMode = ref('text')
+const diagramData = ref({ nodes: [], edges: [] })
 let saveTimeout = null
+let diagramSaveTimeout = null
 
 const availableTags = computed(() => {
   if (!note.value) return []
@@ -170,7 +198,7 @@ const editor = useEditor({
     Image.configure({ HTMLAttributes: { class: 'editor-img' } }),
     Placeholder.configure({ placeholder: 'Escreva algo incrível...' }),
     Underline,
-    Highlight.configure({ multicolor: false }),
+    Highlight.configure({ multicolor: true }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TaskList,
     TaskItem.configure({ nested: true }),
@@ -199,6 +227,8 @@ async function loadNote(id) {
   const data = await notesStore.fetchOne(id)
   note.value = data
   noteTitle.value = data.title || ''
+  diagramData.value = data.diagram_data || { nodes: [], edges: [] }
+  editorMode.value = 'text'
   if (editor.value) {
     editor.value.commands.setContent(sanitizeEditorContent(data.content || ''))
   }
@@ -214,11 +244,32 @@ function debounceSave() {
     const safeContent = sanitizeEditorContent(editor.value?.getHTML() || '')
     await notesStore.save(note.value.id, {
       title: noteTitle.value,
-      content: safeContent
+      content: safeContent,
+      diagram_data: diagramData.value
     })
     lastSaved.value = true
     setTimeout(() => { lastSaved.value = false }, 3000)
   }, 1200)
+}
+
+function handleDiagramUpdate(value) {
+  diagramData.value = value
+  debounceDiagramSave()
+}
+
+function debounceDiagramSave() {
+  clearTimeout(diagramSaveTimeout)
+  diagramSaveTimeout = setTimeout(async () => {
+    if (!note.value) return
+    const safeContent = sanitizeEditorContent(editor.value?.getHTML() || '')
+    await notesStore.save(note.value.id, {
+      title: noteTitle.value,
+      content: safeContent,
+      diagram_data: diagramData.value
+    })
+    lastSaved.value = true
+    setTimeout(() => { lastSaved.value = false }, 3000)
+  }, 900)
 }
 
 async function handleImageUpload(file) {
@@ -229,6 +280,57 @@ async function handleImageUpload(file) {
   } catch (e) {
     console.error('Erro ao fazer upload da imagem', e)
   }
+}
+
+function stripHtml(html) {
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html || '', 'text/html')
+  return doc.body.textContent || ''
+}
+
+function handleExportPdf() {
+  if (!note.value) return
+
+  const pdf = new jsPDF({
+    unit: 'pt',
+    format: 'a4'
+  })
+
+  const marginX = 48
+  const pageWidth = 595.28
+  const maxTextWidth = pageWidth - marginX * 2
+
+  const title = noteTitle.value?.trim() || 'Sem titulo'
+  const bodyText = stripHtml(editor.value?.getHTML() || '')
+
+  pdf.setFont('helvetica', 'bold')
+  pdf.setFontSize(18)
+  pdf.text(title, marginX, 60)
+
+  pdf.setFont('helvetica', 'normal')
+  pdf.setFontSize(11)
+  pdf.setTextColor(90, 93, 112)
+  pdf.text(`Exportado em ${new Date().toLocaleString('pt-BR')}`, marginX, 80)
+
+  pdf.setTextColor(20, 20, 24)
+  pdf.setFontSize(12)
+  const lines = pdf.splitTextToSize(bodyText, maxTextWidth)
+
+  let y = 110
+  const lineHeight = 16
+  const pageHeight = 841.89
+
+  lines.forEach((line) => {
+    if (y > pageHeight - 60) {
+      pdf.addPage()
+      y = 60
+    }
+    pdf.text(line, marginX, y)
+    y += lineHeight
+  })
+
+  const filename = `${title.replace(/[^a-z0-9-_]+/gi, '_') || 'nota'}.pdf`
+  pdf.save(filename)
 }
 
 function formatDate(dateStr) {
@@ -246,6 +348,7 @@ watch(() => route.params.id, (id) => {
 onMounted(() => document.addEventListener('click', handleClickOutside))
 onBeforeUnmount(() => {
   clearTimeout(saveTimeout)
+  clearTimeout(diagramSaveTimeout)
   editor.value?.destroy()
   document.removeEventListener('click', handleClickOutside)
 })
@@ -347,6 +450,34 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.editor-modes {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.mode-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.mode-btn:hover {
+  border-color: var(--purple-1);
+  color: var(--text);
+}
+
+.mode-btn.active {
+  border-color: var(--purple-1);
+  background: var(--purple-dim);
+  color: var(--purple-3);
 }
 .meta-item {
   display: flex;
@@ -457,8 +588,9 @@ onBeforeUnmount(() => {
 
 /* Highlight */
 .tiptap-content :deep(mark) {
-  background: rgba(124, 58, 237, 0.25);
-  color: var(--purple-3);
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--text);
+  border: 1px solid rgba(226, 228, 240, 0.22);
   border-radius: 3px;
   padding: 0 3px;
 }

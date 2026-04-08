@@ -3,14 +3,19 @@ class Users::SessionsController < Devise::SessionsController
 
   private
 
+  def user_json(user)
+    {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      cover_image_url: user.cover_image.attached? ? url_for(user.cover_image) : nil
+    }
+  end
+
   def respond_with(resource, _opts = {})
     render json: {
       message: "Login realizado com sucesso.",
-      user: {
-        id: resource.id,
-        name: resource.name,
-        email: resource.email
-      }
+      user: user_json(resource)
     }, status: :ok
   end
 

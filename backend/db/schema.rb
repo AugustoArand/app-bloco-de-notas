@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_07_181432) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_08_103000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -49,9 +49,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_181432) do
 
   create_table "notebooks", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.boolean "favorite", default: false, null: false
     t.string "name"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["user_id", "favorite"], name: "index_notebooks_on_user_id_and_favorite"
     t.index ["user_id"], name: "index_notebooks_on_user_id"
   end
 
@@ -59,6 +61,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_07_181432) do
     t.datetime "accessed_at"
     t.text "content"
     t.datetime "created_at", null: false
+    t.json "diagram_data", default: {}, null: false
     t.integer "notebook_id", null: false
     t.string "title"
     t.datetime "updated_at", null: false
