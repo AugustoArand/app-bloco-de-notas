@@ -18,8 +18,20 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
 
-  # Cloudflare R2 via Active Storage (credenciais via variáveis de ambiente)
-  config.active_storage.service = :cloudflare_r2
+  # Cloudflare R2 via Active Storage. Falls back to local when credentials are missing.
+  r2_env_keys = %w[
+    CLOUDFLARE_R2_ACCESS_KEY_ID
+    CLOUDFLARE_R2_SECRET_ACCESS_KEY
+    CLOUDFLARE_R2_BUCKET
+    CLOUDFLARE_ACCOUNT_ID
+  ]
+
+  r2_ready = r2_env_keys.all? { |key| ENV[key].present? }
+  config.active_storage.service = r2_ready ? :cloudflare_r2 : :local
+
+  unless r2_ready
+    config.logger&.warn("Active Storage usando :local porque variáveis do Cloudflare R2 estão incompletas.")
+  end
 
   # Railway termina SSL no proxy — informar ao Rails que já está em HTTPS
   config.assume_ssl = true

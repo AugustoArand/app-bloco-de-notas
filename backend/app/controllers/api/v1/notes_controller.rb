@@ -69,6 +69,9 @@ module Api
         render json: { url: url }, status: :created
       rescue ActiveRecord::RecordNotFound
         not_found
+      rescue StandardError => e
+        Rails.logger.error("upload_image falhou: #{e.class} - #{e.message}")
+        render json: { errors: ["Falha ao fazer upload da imagem."] }, status: :internal_server_error
       end
 
       private
