@@ -4,5 +4,5 @@ class Notebook < ApplicationRecord
 
   validates :name, presence: true
 
-  default_scope { order(favorite: :desc, updated_at: :desc) }
+  scope :ordered_for_sidebar, -> { order(favorite: :desc, updated_at: :desc) }
 end

@@ -4,7 +4,7 @@ module Api
       before_action :set_notebook, only: [:show, :update, :destroy]
 
       def index
-        @notebooks = current_user.notebooks
+        @notebooks = current_user.notebooks.ordered_for_sidebar
         render json: @notebooks.map { |nb| notebook_json(nb) }
       end
 
