@@ -50,12 +50,16 @@ export const useAuthStore = defineStore('auth', {
     async logout() {
       try {
         await api.delete('/auth/sign_out')
+      } catch (_e) {
+        // Even if the backend logout fails, clear local session to force re-authentication.
       } finally {
         this.token = null
         this.user = null
         localStorage.removeItem('token')
         localStorage.removeItem('user')
       }
+
+      return true
     }
   }
 })

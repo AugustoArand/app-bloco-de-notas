@@ -12,12 +12,29 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
+import { useAuthStore } from '@/stores/auth'
 import { useNotebooksStore } from '@/stores/notebooks'
 
+const router = useRouter()
+const auth = useAuthStore()
 const notebooks = useNotebooksStore()
-onMounted(() => notebooks.fetch())
+
+watch(
+  () => auth.isLoggedIn,
+  (isLoggedIn) => {
+    if (!isLoggedIn) {
+      router.replace('/login')
+    }
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  if (auth.isLoggedIn) notebooks.fetch()
+})
 </script>
 
 <style scoped>
