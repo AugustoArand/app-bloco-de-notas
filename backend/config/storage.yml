@@ -26,3 +26,5 @@ cloudflare_r2:
   bucket: <%= ENV["CLOUDFLARE_R2_BUCKET"].to_s.gsub(/\A['\"]|['\"]\z/, "") %>
   endpoint: https://<%= ENV["CLOUDFLARE_ACCOUNT_ID"].to_s.gsub(/\A['\"]|['\"]\z/, "") %>.r2.cloudflarestorage.com
   force_path_style: true
+  request_checksum_calculation: when_required
+  response_checksum_validation: when_required
