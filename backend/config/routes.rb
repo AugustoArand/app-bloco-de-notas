@@ -29,6 +29,19 @@ Rails.application.routes.draw do
     end
   end
 
+  # Handle CORS preflight for all routes
+  match '*path', via: :options, to: proc { |env|
+    origin = env['HTTP_ORIGIN'] || '*'
+    [200, {
+      'Access-Control-Allow-Origin'   => origin,
+      'Access-Control-Allow-Methods'  => 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD',
+      'Access-Control-Allow-Headers'  => 'Content-Type, Authorization, Accept',
+      'Access-Control-Expose-Headers' => 'Authorization',
+      'Access-Control-Max-Age'        => '600',
+      'Content-Type'                  => 'text/plain'
+    }, ['']]
+  }
+
   # Health check
   get "up", to: "rails/health#show", as: :rails_health_check
 end
