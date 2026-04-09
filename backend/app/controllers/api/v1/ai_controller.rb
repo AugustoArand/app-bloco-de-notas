@@ -50,14 +50,42 @@ class Api::V1::AiController < ApplicationController
       system_prompt: "Voce e um assistente de traducao tecnica.",
       user_prompt: <<~PROMPT,
         Extraia ate #{limit} termos importantes do texto e traduza de portugues para ingles.
-        Responda apenas no formato abaixo, uma linha por termo:
+        Responda SOMENTE no formato abaixo, uma linha por termo:
         termo_pt | termo_en | contexto_curto
-        Nao inclua cabecalho.
+        Nao inclua cabecalho, introducao ou comentario adicional.
+        Nao responda em paragrafos.
 
         Texto:
         #{content}
       PROMPT
       max_tokens: 700
+    )
+
+    render json: { result: result }
+  rescue OpenaiClient::ConfigurationError => e
+    render json: { error: e.message }, status: :service_unavailable
+  rescue OpenaiClient::RequestError => e
+    render json: { error: e.message }, status: :bad_gateway
+  end
+
+  def translate_text
+    content = params[:content].to_s.strip
+    target_language = params[:target_language].to_s.strip.presence || "ingles"
+
+    if content.blank?
+      return render json: { error: "Conteudo vazio para traducao de texto." }, status: :unprocessable_entity
+    end
+
+    result = openai_client.chat(
+      system_prompt: "Voce e um tradutor profissional. Preserve o significado do texto e mantenha clareza.",
+      user_prompt: <<~PROMPT,
+        Traduza o texto abaixo para #{target_language}.
+        Retorne apenas a traducao final, sem explicacoes extras.
+
+        Texto:
+        #{content}
+      PROMPT
+      max_tokens: 900
     )
 
     render json: { result: result }
