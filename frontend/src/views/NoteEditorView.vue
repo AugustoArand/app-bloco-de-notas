@@ -54,8 +54,7 @@
               v-model="aiQuestion"
               class="ai-question-input"
               :disabled="aiLoading"
-              placeholder="Pergunte algo para a IA gerar texto..."
-              @keyup.enter="generateTextWithAi"
+              placeholder="Pergunta para 'Gerar texto IA' (opcional para os outros botoes)"
             />
             <button
               class="ai-btn"
@@ -74,9 +73,16 @@
             <button
               class="ai-btn"
               :disabled="aiLoading"
+              @click="translateTextWithAi"
+            >
+              {{ aiLoading && aiMode === 'translate-text' ? 'Traduzindo texto...' : 'Traduzir texto IA' }}
+            </button>
+            <button
+              class="ai-btn"
+              :disabled="aiLoading"
               @click="translateTermsWithAi"
             >
-              {{ aiLoading && aiMode === 'translate' ? 'Traduzindo...' : 'Traduzir termos IA' }}
+              {{ aiLoading && aiMode === 'translate-terms' ? 'Traduzindo termos...' : 'Traduzir termos IA' }}
             </button>
             <button
               v-if="aiResult"
@@ -88,9 +94,13 @@
             </button>
           </div>
 
+          <p class="ai-help" v-if="editorMode === 'text'">
+            Use "Traduzir texto IA" para traduzir o conteudo completo da nota e "Traduzir termos IA" para glossario tecnico.
+          </p>
+
           <p v-if="aiError" class="ai-error">{{ aiError }}</p>
           <div v-if="aiResult" class="ai-result">
-            <h4>Resultado IA</h4>
+            <h4>{{ aiResultTitle }}</h4>
             <pre>{{ aiResult }}</pre>
           </div>
 
@@ -205,6 +215,14 @@ const availableTags = computed(() => {
   if (!note.value) return []
   const noteTIds = new Set((note.value.tags || []).map(t => t.id))
   return tagsStore.tags.filter(t => !noteTIds.has(t.id))
+})
+
+const aiResultTitle = computed(() => {
+  if (aiMode.value === 'summary') return 'Resultado IA - Resumo'
+  if (aiMode.value === 'translate-text') return 'Resultado IA - Traducao de texto'
+  if (aiMode.value === 'translate-terms') return 'Resultado IA - Traducao de termos'
+  if (aiMode.value === 'generate') return 'Resultado IA - Texto gerado'
+  return 'Resultado IA'
 })
 
 function sanitizeEditorContent(html) {
@@ -435,7 +453,7 @@ async function translateTermsWithAi() {
   }
 
   aiLoading.value = true
-  aiMode.value = 'translate'
+  aiMode.value = 'translate-terms'
   aiError.value = ''
   aiResult.value = ''
 
@@ -447,6 +465,33 @@ async function translateTermsWithAi() {
     aiResult.value = data.result || ''
   } catch (error) {
     aiError.value = error.response?.data?.error || 'Falha ao traduzir termos com IA.'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+async function translateTextWithAi() {
+  if (!note.value || aiLoading.value) return
+
+  const content = getNotePlainText().trim()
+  if (!content) {
+    aiError.value = 'Escreva algum conteudo antes de traduzir o texto.'
+    return
+  }
+
+  aiLoading.value = true
+  aiMode.value = 'translate-text'
+  aiError.value = ''
+  aiResult.value = ''
+
+  try {
+    const { data } = await api.post('/api/v1/ai/translate_text', {
+      content,
+      target_language: 'ingles'
+    })
+    aiResult.value = data.result || ''
+  } catch (error) {
+    aiError.value = error.response?.data?.error || 'Falha ao traduzir o texto com IA.'
   } finally {
     aiLoading.value = false
   }
@@ -640,6 +685,12 @@ onBeforeUnmount(() => {
 
 .ai-question-input:focus {
   border-color: var(--purple-1);
+}
+
+.ai-help {
+  margin: 8px 0 0;
+  color: var(--text-3);
+  font-size: 12px;
 }
 
 .ai-btn {
