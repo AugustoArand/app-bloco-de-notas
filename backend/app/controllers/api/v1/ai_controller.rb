@@ -67,6 +67,37 @@ class Api::V1::AiController < ApplicationController
     render json: { error: e.message }, status: :bad_gateway
   end
 
+  def generate_text
+    question = params[:question].to_s.strip
+    context = params[:context].to_s.strip
+
+    if question.blank?
+      return render json: { error: "Pergunta vazia para gerar texto." }, status: :unprocessable_entity
+    end
+
+    result = openai_client.chat(
+      system_prompt: "Voce e um assistente de escrita. Responda em portugues brasileiro, com clareza e objetividade.",
+      user_prompt: <<~PROMPT,
+        Gere um texto com base na pergunta do usuario.
+        Se houver contexto, use apenas como apoio.
+        Evite inventar fatos e sinalize incerteza quando necessario.
+
+        Pergunta:
+        #{question}
+
+        Contexto opcional:
+        #{context.presence || "(sem contexto adicional)"}
+      PROMPT
+      max_tokens: 800
+    )
+
+    render json: { result: result }
+  rescue OpenaiClient::ConfigurationError => e
+    render json: { error: e.message }, status: :service_unavailable
+  rescue OpenaiClient::RequestError => e
+    render json: { error: e.message }, status: :bad_gateway
+  end
+
   private
 
   def openai_client
