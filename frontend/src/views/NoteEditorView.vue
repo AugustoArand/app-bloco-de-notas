@@ -50,6 +50,20 @@
           </div>
 
           <div class="ai-actions" v-if="editorMode === 'text'">
+            <input
+              v-model="aiQuestion"
+              class="ai-question-input"
+              :disabled="aiLoading"
+              placeholder="Pergunte algo para a IA gerar texto..."
+              @keyup.enter="generateTextWithAi"
+            />
+            <button
+              class="ai-btn"
+              :disabled="aiLoading || !aiQuestion.trim()"
+              @click="generateTextWithAi"
+            >
+              {{ aiLoading && aiMode === 'generate' ? 'Gerando...' : 'Gerar texto IA' }}
+            </button>
             <button
               class="ai-btn"
               :disabled="aiLoading"
@@ -183,6 +197,7 @@ const aiLoading = ref(false)
 const aiMode = ref('')
 const aiResult = ref('')
 const aiError = ref('')
+const aiQuestion = ref('')
 let saveTimeout = null
 let diagramSaveTimeout = null
 
@@ -394,6 +409,7 @@ async function summarizeWithAi(style = 'bullet') {
   aiLoading.value = true
   aiMode.value = 'summary'
   aiError.value = ''
+  aiResult.value = ''
 
   try {
     const { data } = await api.post('/api/v1/ai/summarize', {
@@ -421,6 +437,7 @@ async function translateTermsWithAi() {
   aiLoading.value = true
   aiMode.value = 'translate'
   aiError.value = ''
+  aiResult.value = ''
 
   try {
     const { data } = await api.post('/api/v1/ai/translate_terms', {
@@ -430,6 +447,33 @@ async function translateTermsWithAi() {
     aiResult.value = data.result || ''
   } catch (error) {
     aiError.value = error.response?.data?.error || 'Falha ao traduzir termos com IA.'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+async function generateTextWithAi() {
+  if (!note.value || aiLoading.value) return
+
+  const question = aiQuestion.value.trim()
+  if (!question) {
+    aiError.value = 'Digite uma pergunta para gerar texto com IA.'
+    return
+  }
+
+  aiLoading.value = true
+  aiMode.value = 'generate'
+  aiError.value = ''
+  aiResult.value = ''
+
+  try {
+    const { data } = await api.post('/api/v1/ai/generate_text', {
+      question,
+      context: getNotePlainText().trim()
+    })
+    aiResult.value = data.result || ''
+  } catch (error) {
+    aiError.value = error.response?.data?.error || 'Falha ao gerar texto com IA.'
   } finally {
     aiLoading.value = false
   }
@@ -580,6 +624,22 @@ onBeforeUnmount(() => {
   gap: 8px;
   flex-wrap: wrap;
   margin-top: 10px;
+}
+
+.ai-question-input {
+  flex: 1;
+  min-width: 260px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+
+.ai-question-input:focus {
+  border-color: var(--purple-1);
 }
 
 .ai-btn {

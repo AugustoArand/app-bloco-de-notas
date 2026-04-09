@@ -18,6 +18,7 @@ Rails.application.routes.draw do
       delete "users/cover", to: "users#remove_cover"
       post "ai/summarize", to: "ai#summarize"
       post "ai/translate_terms", to: "ai#translate_terms"
+      post "ai/generate_text", to: "ai#generate_text"
 
       resources :tags
 
