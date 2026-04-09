@@ -16,6 +16,8 @@ Rails.application.routes.draw do
       get "me", to: "users#me"
       post "users/cover", to: "users#upload_cover"
       delete "users/cover", to: "users#remove_cover"
+      post "ai/summarize", to: "ai#summarize"
+      post "ai/translate_terms", to: "ai#translate_terms"
 
       resources :tags
 

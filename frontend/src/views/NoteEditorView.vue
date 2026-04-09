@@ -49,6 +49,37 @@
             </button>
           </div>
 
+          <div class="ai-actions" v-if="editorMode === 'text'">
+            <button
+              class="ai-btn"
+              :disabled="aiLoading"
+              @click="summarizeWithAi('bullet')"
+            >
+              {{ aiLoading && aiMode === 'summary' ? 'Resumindo...' : 'Resumo IA' }}
+            </button>
+            <button
+              class="ai-btn"
+              :disabled="aiLoading"
+              @click="translateTermsWithAi"
+            >
+              {{ aiLoading && aiMode === 'translate' ? 'Traduzindo...' : 'Traduzir termos IA' }}
+            </button>
+            <button
+              v-if="aiResult"
+              class="ai-btn secondary"
+              :disabled="aiLoading"
+              @click="insertAiResultInEditor"
+            >
+              Inserir no texto
+            </button>
+          </div>
+
+          <p v-if="aiError" class="ai-error">{{ aiError }}</p>
+          <div v-if="aiResult" class="ai-result">
+            <h4>Resultado IA</h4>
+            <pre>{{ aiResult }}</pre>
+          </div>
+
           <!-- Tags panel -->
           <div class="note-tags-panel">
             <TagBadge
@@ -136,6 +167,7 @@ import TagBadge from '@/components/TagBadge.vue'
 import MindMapBoard from '@/components/MindMapBoard.vue'
 import { useNotesStore } from '@/stores/notes'
 import { useTagsStore } from '@/stores/tags'
+import api from '@/services/api'
 
 const route = useRoute()
 const notesStore = useNotesStore()
@@ -147,6 +179,10 @@ const lastSaved = ref(false)
 const showTagPicker = ref(false)
 const editorMode = ref('text')
 const diagramData = ref({ nodes: [], edges: [] })
+const aiLoading = ref(false)
+const aiMode = ref('')
+const aiResult = ref('')
+const aiError = ref('')
 let saveTimeout = null
 let diagramSaveTimeout = null
 
@@ -333,6 +369,87 @@ function handleExportPdf() {
   pdf.save(filename)
 }
 
+function getNotePlainText() {
+  return stripHtml(editor.value?.getHTML() || '')
+}
+
+function escapeHtml(value) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+async function summarizeWithAi(style = 'bullet') {
+  if (!note.value || aiLoading.value) return
+
+  const content = getNotePlainText().trim()
+  if (!content) {
+    aiError.value = 'Escreva algum conteudo antes de usar o resumo IA.'
+    return
+  }
+
+  aiLoading.value = true
+  aiMode.value = 'summary'
+  aiError.value = ''
+
+  try {
+    const { data } = await api.post('/api/v1/ai/summarize', {
+      title: noteTitle.value,
+      content,
+      style
+    })
+    aiResult.value = data.result || ''
+  } catch (error) {
+    aiError.value = error.response?.data?.error || 'Falha ao gerar resumo com IA.'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+async function translateTermsWithAi() {
+  if (!note.value || aiLoading.value) return
+
+  const content = getNotePlainText().trim()
+  if (!content) {
+    aiError.value = 'Escreva algum conteudo antes de traduzir termos.'
+    return
+  }
+
+  aiLoading.value = true
+  aiMode.value = 'translate'
+  aiError.value = ''
+
+  try {
+    const { data } = await api.post('/api/v1/ai/translate_terms', {
+      content,
+      limit: 12
+    })
+    aiResult.value = data.result || ''
+  } catch (error) {
+    aiError.value = error.response?.data?.error || 'Falha ao traduzir termos com IA.'
+  } finally {
+    aiLoading.value = false
+  }
+}
+
+function insertAiResultInEditor() {
+  if (!editor.value || !aiResult.value) return
+
+  const lines = aiResult.value
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean)
+
+  if (!lines.length) return
+
+  const html = lines.map(line => `<p>${escapeHtml(line)}</p>`).join('')
+  editor.value.chain().focus().insertContent(html).run()
+  debounceSave()
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString('pt-BR', {
@@ -456,6 +573,70 @@ onBeforeUnmount(() => {
   display: flex;
   gap: 8px;
   margin-top: 12px;
+}
+
+.ai-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.ai-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-2);
+  border-radius: 99px;
+  padding: 5px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.ai-btn:hover:not(:disabled) {
+  border-color: var(--purple-1);
+  color: var(--text);
+}
+
+.ai-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.ai-btn.secondary {
+  border-style: dashed;
+}
+
+.ai-error {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #ef4f4f;
+}
+
+.ai-result {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+
+.ai-result h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ai-result pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
 }
 
 .mode-btn {
