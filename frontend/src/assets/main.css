@@ -269,49 +269,55 @@ code, pre {
 .font-mono { font-family: 'JetBrains Mono', monospace; }
 .truncate { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-/* ---------- Tiptap Task List (global — NodeView é gerado via JS, não alcançado por :deep()) ---------- */
-.tiptap-editor ul[data-type="taskList"] {
-  list-style: none;
-  padding: 0;
+/* ---------- Tiptap Task List — alvo: .ProseMirror (classe injetada pelo próprio ProseMirror no contenteditable) ---------- */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none !important;
+  padding: 0 !important;
   margin: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
 }
-.tiptap-editor li[data-type="taskItem"] {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
+/* li via data-type OU via data-checked (ambos são setados pelo NodeView) */
+.ProseMirror li[data-type="taskItem"],
+.ProseMirror ul[data-type="taskList"] > li {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
   gap: 8px;
   padding: 3px 0;
 }
-.tiptap-editor li[data-type="taskItem"] > label {
-  display: flex;
-  align-items: center;
+.ProseMirror li[data-type="taskItem"] > label,
+.ProseMirror ul[data-type="taskList"] > li > label {
+  display: flex !important;
+  align-items: center !important;
   flex-shrink: 0;
   cursor: pointer;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
   user-select: none;
+  line-height: 1;
 }
-.tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"] {
+.ProseMirror li[data-type="taskItem"] > label input[type="checkbox"],
+.ProseMirror ul[data-type="taskList"] > li > label input[type="checkbox"] {
   accent-color: var(--purple-1);
-  width: 15px;
-  height: 15px;
+  width: 15px !important;
+  height: 15px !important;
   cursor: pointer;
-  margin: 0;
-  display: block;
+  margin: 0 !important;
+  display: block !important;
+  flex-shrink: 0;
 }
-.tiptap-editor li[data-type="taskItem"] > div {
-  flex: 1;
+.ProseMirror li[data-type="taskItem"] > div,
+.ProseMirror ul[data-type="taskList"] > li > div {
+  flex: 1 !important;
   min-width: 0;
 }
-.tiptap-editor li[data-type="taskItem"] > div > p {
-  margin: 0;
+.ProseMirror li[data-type="taskItem"] > div > p,
+.ProseMirror ul[data-type="taskList"] > li > div > p {
+  margin: 0 !important;
   line-height: 1.5;
 }
-.tiptap-editor li[data-type="taskItem"][data-checked="true"] > div,
-.tiptap-editor li[data-type="taskItem"][data-checked="true"] > div p {
-  text-decoration: line-through;
-  color: var(--text-3);
+/* Riscado ao marcar */
+.ProseMirror li[data-type="taskItem"][data-checked="true"] > div,
+.ProseMirror li[data-type="taskItem"][data-checked="true"] > div p {
+  text-decoration: line-through !important;
+  color: var(--text-3) !important;
 }

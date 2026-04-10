@@ -177,6 +177,19 @@
         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         Salvo
       </span>
+
+      <button
+        class="tool-btn delete-btn"
+        @click="$emit('delete-note')"
+        title="Excluir nota"
+      >
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="3,6 5,6 21,6"/>
+          <path d="M19,6l-1,14H6L5,6"/>
+          <path d="M10,11v6"/><path d="M14,11v6"/>
+          <path d="M9,6V4h6v2"/>
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -188,7 +201,7 @@ const props = defineProps({
   lastSaved: Boolean
 })
 
-const emit = defineEmits(['insert-image', 'export-pdf'])
+const emit = defineEmits(['insert-image', 'export-pdf', 'delete-note'])
 const highlightColors = ['#7c3aed33', '#22c55e33', '#f59e0b33', '#3b82f633']
 
 function applyHeading(level) {
@@ -324,4 +337,16 @@ function applyHighlight(color) {
 }
 .save-indicator.saved { color: var(--green); }
 .save-indicator.saving { color: var(--purple-2); }
+
+.delete-btn {
+  color: var(--text-3);
+  border: 1px solid transparent;
+  width: auto;
+  padding: 0 8px;
+}
+.delete-btn:hover {
+  color: var(--red);
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.3);
+}
 </style>

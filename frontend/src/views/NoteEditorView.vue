@@ -7,6 +7,7 @@
       :last-saved="lastSaved"
       @insert-image="handleImageUpload"
       @export-pdf="handleExportPdf"
+      @delete-note="handleDeleteNote"
     />
 
     <!-- Main editor area -->
@@ -172,7 +173,7 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import DOMPurify from 'dompurify'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -195,6 +196,7 @@ import { useTagsStore } from '@/stores/tags'
 import api from '@/services/api'
 
 const route = useRoute()
+const router = useRouter()
 const notesStore = useNotesStore()
 const tagsStore = useTagsStore()
 
@@ -539,6 +541,13 @@ function insertAiResultInEditor() {
   const html = lines.map(line => `<p>${escapeHtml(line)}</p>`).join('')
   editor.value.chain().focus().insertContent(html).run()
   debounceSave()
+}
+
+async function handleDeleteNote() {
+  if (!note.value) return
+  if (!confirm(`Excluir a nota "${noteTitle.value || 'Sem título'}"? Esta ação não pode ser desfeita.`)) return
+  await notesStore.remove(note.value.id)
+  router.push('/')
 }
 
 function formatDate(dateStr) {
