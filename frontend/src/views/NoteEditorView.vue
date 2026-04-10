@@ -173,6 +173,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import DOMPurify from 'dompurify'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -227,9 +228,10 @@ const aiResultTitle = computed(() => {
 
 function sanitizeEditorContent(html) {
   if (!html) return ''
-
-  // Remove image tags that use unsupported/local-only URL schemes.
-  return html.replace(/<img\b[^>]*\bsrc=["'](attachment:|blob:)[^"']*["'][^>]*>/gi, '')
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+  })
 }
 
 async function addTagToNote(tag) {
