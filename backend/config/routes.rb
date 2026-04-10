@@ -22,6 +22,7 @@ Rails.application.routes.draw do
       post "ai/generate_text", to: "ai#generate_text"
 
       resources :tags
+      resources :quick_notes
 
       # Recent and global search (must come BEFORE the shallow notes resources)
       get "notes/recent", to: "notes#recent"
