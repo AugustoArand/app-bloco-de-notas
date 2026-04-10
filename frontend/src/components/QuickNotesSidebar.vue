@@ -621,29 +621,80 @@ function formatDate(dateStr) {
 .qn-modal-delete:hover { color: var(--red); background: rgba(244,63,94,.1); }
 .qn-modal-close:hover  { color: var(--text); background: var(--panel-hover); }
 
-.qn-modal-textarea {
+/* ── Editor contenteditable ── */
+.qn-modal-editor {
   flex: 1;
-  min-height: 280px;
-  background: transparent;
-  border: none;
-  outline: none;
-  resize: none;
-  padding: 16px;
+  min-height: 240px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 14px 16px;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: 1.75;
   color: var(--text);
+  outline: none;
 }
-.qn-modal-textarea::placeholder { color: var(--text-3); }
+.qn-modal-editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-3);
+  pointer-events: none;
+}
+.qn-modal-editor ul,
+.qn-modal-editor ol { padding-left: 20px; margin: 4px 0; }
+.qn-modal-editor li { margin: 2px 0; }
 
-.qn-modal-footer {
+/* ── Barra de formatação ── */
+.qn-format-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
+  gap: 2px;
+  padding: 6px 10px;
   border-top: 1px solid var(--border-soft);
-  font-size: 11.5px;
-  color: var(--text-3);
+  background: var(--surface);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 }
-.qn-saved-hint { color: var(--green); }
+
+.qn-fmt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-2);
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.qn-fmt-btn:hover {
+  background: var(--panel-hover);
+  color: var(--purple-2);
+}
+
+.qn-fmt-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.qn-fmt-spacer { flex: 1; }
+
+.qn-modal-footer-date {
+  font-size: 11px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.qn-saved-hint {
+  font-size: 11px;
+  color: var(--green);
+  margin-left: 6px;
+  white-space: nowrap;
+}
 </style>
