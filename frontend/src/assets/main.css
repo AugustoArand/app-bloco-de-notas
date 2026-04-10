@@ -268,3 +268,50 @@ code, pre {
 .text-xs { font-size: 11px; }
 .font-mono { font-family: 'JetBrains Mono', monospace; }
 .truncate { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+/* ---------- Tiptap Task List (global — NodeView é gerado via JS, não alcançado por :deep()) ---------- */
+.tiptap-editor ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tiptap-editor li[data-type="taskItem"] {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+.tiptap-editor li[data-type="taskItem"] > label {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+.tiptap-editor li[data-type="taskItem"] > label input[type="checkbox"] {
+  accent-color: var(--purple-1);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  margin: 0;
+  display: block;
+}
+.tiptap-editor li[data-type="taskItem"] > div {
+  flex: 1;
+  min-width: 0;
+}
+.tiptap-editor li[data-type="taskItem"] > div > p {
+  margin: 0;
+  line-height: 1.5;
+}
+.tiptap-editor li[data-type="taskItem"][data-checked="true"] > div,
+.tiptap-editor li[data-type="taskItem"][data-checked="true"] > div p {
+  text-decoration: line-through;
+  color: var(--text-3);
+}

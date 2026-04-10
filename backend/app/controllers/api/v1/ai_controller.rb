@@ -1,8 +1,11 @@
 class Api::V1::AiController < ApplicationController
   before_action :authenticate_user!
 
+  MAX_CONTENT_LENGTH = 8_000
+  ALLOWED_LANGUAGES  = %w[ingles espanhol frances alemao italiano japones chines russo arabe].freeze
+
   def summarize
-    content = params[:content].to_s.strip
+    content = params[:content].to_s.strip.truncate(MAX_CONTENT_LENGTH)
     style = params[:style].to_s.presence || "bullet"
 
     if content.blank?
@@ -37,7 +40,7 @@ class Api::V1::AiController < ApplicationController
   end
 
   def translate_terms
-    content = params[:content].to_s.strip
+    content = params[:content].to_s.strip.truncate(MAX_CONTENT_LENGTH)
     limit = params[:limit].to_i
     limit = 12 if limit <= 0
     limit = 25 if limit > 25
@@ -69,8 +72,9 @@ class Api::V1::AiController < ApplicationController
   end
 
   def translate_text
-    content = params[:content].to_s.strip
-    target_language = params[:target_language].to_s.strip.presence || "ingles"
+    content = params[:content].to_s.strip.truncate(MAX_CONTENT_LENGTH)
+    raw_lang = params[:target_language].to_s.strip.downcase
+    target_language = ALLOWED_LANGUAGES.include?(raw_lang) ? raw_lang : "ingles"
 
     if content.blank?
       return render json: { error: "Conteudo vazio para traducao de texto." }, status: :unprocessable_entity
@@ -96,8 +100,8 @@ class Api::V1::AiController < ApplicationController
   end
 
   def generate_text
-    question = params[:question].to_s.strip
-    context = params[:context].to_s.strip
+    question = params[:question].to_s.strip.truncate(1_000)
+    context = params[:context].to_s.strip.truncate(MAX_CONTENT_LENGTH)
 
     if question.blank?
       return render json: { error: "Pergunta vazia para gerar texto." }, status: :unprocessable_entity

@@ -173,6 +173,7 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import DOMPurify from 'dompurify'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -227,9 +228,10 @@ const aiResultTitle = computed(() => {
 
 function sanitizeEditorContent(html) {
   if (!html) return ''
-
-  // Remove image tags that use unsupported/local-only URL schemes.
-  return html.replace(/<img\b[^>]*\bsrc=["'](attachment:|blob:)[^"']*["'][^>]*>/gi, '')
+  return DOMPurify.sanitize(html, {
+    USE_PROFILES: { html: true },
+    FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+  })
 }
 
 async function addTagToNote(tag) {
@@ -819,54 +821,7 @@ onBeforeUnmount(() => {
   gap: 4px;
 }
 
-/* Task list */
-.tiptap-content :deep(ul[data-type="taskList"]) {
-  list-style: none !important;
-  padding: 0 !important;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.tiptap-content :deep(li[data-type="taskItem"]) {
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  gap: 8px;
-  padding: 3px 0;
-}
-.tiptap-content :deep(li[data-type="taskItem"] > label) {
-  display: flex !important;
-  align-items: center !important;
-  flex-shrink: 0;
-  cursor: pointer;
-  margin: 0;
-  padding: 0;
-  line-height: 1;
-}
-.tiptap-content :deep(li[data-type="taskItem"] > label input[type="checkbox"]) {
-  accent-color: var(--purple-1);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
-  margin: 0;
-  display: block;
-}
-.tiptap-content :deep(li[data-type="taskItem"] > div) {
-  flex: 1;
-  min-width: 0;
-}
-.tiptap-content :deep(li[data-type="taskItem"] > div > p) {
-  margin: 0;
-  line-height: 1.5;
-}
-.tiptap-content :deep(li[data-type="taskItem"][data-checked="true"] > div) {
-  text-decoration: line-through;
-  color: var(--text-3);
-}
-.tiptap-content :deep(li[data-type="taskItem"][data-checked="true"] > div p) {
-  color: var(--text-3);
-  text-decoration: line-through;
-}
+/* Task list — estilos globais em main.css (NodeView gerado via JS) */
 
 /* Code inline */
 .tiptap-content :deep(code) {
