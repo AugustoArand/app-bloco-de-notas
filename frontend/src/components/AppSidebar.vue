@@ -479,10 +479,15 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .notebook-item:hover .notebook-actions { opacity: 1; }
 .note-count {
   font-size: 10px;
-  color: var(--text-3);
-  background: var(--surface);
-  padding: 1px 5px;
+  font-weight: 600;
+  color: var(--purple-3);
+  background: var(--purple-dim);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  padding: 1px 6px;
   border-radius: 99px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.6;
 }
 
 .btn-icon.tiny { padding: 3px; }

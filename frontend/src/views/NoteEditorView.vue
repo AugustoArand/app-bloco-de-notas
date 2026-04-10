@@ -171,7 +171,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, computed, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -826,17 +826,30 @@ onBeforeUnmount(() => {
 }
 .tiptap-content :deep(li[data-type="taskItem"]) {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   padding: 3px 0;
 }
 .tiptap-content :deep(li[data-type="taskItem"] > label) {
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 .tiptap-content :deep(li[data-type="taskItem"] > label input[type="checkbox"]) {
   accent-color: var(--purple-1);
   width: 16px; height: 16px;
   cursor: pointer;
+  margin: 0;
+}
+.tiptap-content :deep(li[data-type="taskItem"] > div) {
+  flex: 1;
+}
+.tiptap-content :deep(li[data-type="taskItem"][data-checked="true"] > div) {
+  text-decoration: line-through;
+  color: var(--text-3);
+}
+.tiptap-content :deep(li[data-type="taskItem"][data-checked="true"] > div p) {
+  color: var(--text-3);
 }
 
 /* Code inline */
