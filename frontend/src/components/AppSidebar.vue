@@ -85,6 +85,7 @@
                 ref="editInput"
               />
             </div>
+            <span class="note-count">{{ nb.notes_count }}</span>
             <div class="notebook-actions">
               <button
                 class="btn-icon tiny"
@@ -96,7 +97,6 @@
                   <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
                 </svg>
               </button>
-              <span class="note-count">{{ nb.notes_count }}</span>
               <button class="btn-icon tiny" @click.stop="startEditNotebook(nb)" title="Renomear">
                 <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
@@ -488,6 +488,7 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
   min-width: 18px;
   text-align: center;
   line-height: 1.6;
+  flex-shrink: 0;
 }
 
 .btn-icon.tiny { padding: 3px; }

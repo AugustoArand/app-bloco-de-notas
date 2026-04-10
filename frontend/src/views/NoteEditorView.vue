@@ -821,28 +821,43 @@ onBeforeUnmount(() => {
 
 /* Task list */
 .tiptap-content :deep(ul[data-type="taskList"]) {
-  list-style: none;
-  padding: 0;
+  list-style: none !important;
+  padding: 0 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 .tiptap-content :deep(li[data-type="taskItem"]) {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
   gap: 8px;
   padding: 3px 0;
 }
 .tiptap-content :deep(li[data-type="taskItem"] > label) {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
   flex-shrink: 0;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
 }
 .tiptap-content :deep(li[data-type="taskItem"] > label input[type="checkbox"]) {
   accent-color: var(--purple-1);
-  width: 16px; height: 16px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
   margin: 0;
+  display: block;
 }
 .tiptap-content :deep(li[data-type="taskItem"] > div) {
   flex: 1;
+  min-width: 0;
+}
+.tiptap-content :deep(li[data-type="taskItem"] > div > p) {
+  margin: 0;
+  line-height: 1.5;
 }
 .tiptap-content :deep(li[data-type="taskItem"][data-checked="true"] > div) {
   text-decoration: line-through;
@@ -850,6 +865,7 @@ onBeforeUnmount(() => {
 }
 .tiptap-content :deep(li[data-type="taskItem"][data-checked="true"] > div p) {
   color: var(--text-3);
+  text-decoration: line-through;
 }
 
 /* Code inline */
