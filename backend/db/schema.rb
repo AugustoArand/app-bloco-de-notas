@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_08_103000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_10_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -68,6 +68,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_103000) do
     t.index ["notebook_id"], name: "index_notes_on_notebook_id"
   end
 
+  create_table "quick_notes", force: :cascade do |t|
+    t.string "color", default: "default"
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0
+    t.text "text", default: ""
+    t.string "title", default: ""
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "position"], name: "index_quick_notes_on_user_id_and_position"
+    t.index ["user_id"], name: "index_quick_notes_on_user_id"
+  end
+
   create_table "tags", force: :cascade do |t|
     t.string "color"
     t.datetime "created_at", null: false
@@ -98,5 +110,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_08_103000) do
   add_foreign_key "note_tags", "tags"
   add_foreign_key "notebooks", "users"
   add_foreign_key "notes", "notebooks"
+  add_foreign_key "quick_notes", "users"
   add_foreign_key "tags", "users"
 end

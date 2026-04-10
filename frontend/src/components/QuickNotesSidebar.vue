@@ -27,8 +27,12 @@
     </div>
 
     <div class="qn-list">
+      <div v-if="store.loading" class="qn-loading">
+        <div class="spinner"></div>
+      </div>
+
       <div
-        v-if="!store.notes.length"
+        v-else-if="!store.notes.length"
         class="qn-empty"
       >
         <svg width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -100,15 +104,51 @@
           </div>
         </div>
 
-        <textarea
-          v-model="activeNote.text"
-          class="qn-modal-textarea"
-          placeholder="Escreva sua anotação rápida..."
-          @input="saveActive"
-        ></textarea>
+        <div
+          ref="editorRef"
+          class="qn-modal-editor"
+          contenteditable="true"
+          :data-placeholder="'Escreva sua anotação rápida...'"
+          @input="onEditorInput"
+        ></div>
 
-        <div class="qn-modal-footer">
-          <span>{{ formatDate(activeNote.updatedAt) }}</span>
+        <!-- Barra de formatação -->
+        <div class="qn-format-bar">
+          <button class="qn-fmt-btn" @mousedown.prevent="fmt('bold')"       title="Negrito (Ctrl+B)">
+            <b>B</b>
+          </button>
+          <button class="qn-fmt-btn" @mousedown.prevent="fmt('italic')"     title="Itálico (Ctrl+I)">
+            <i>I</i>
+          </button>
+          <button class="qn-fmt-btn" @mousedown.prevent="fmt('underline')"  title="Sublinhado (Ctrl+U)">
+            <u>U</u>
+          </button>
+          <div class="qn-fmt-divider"></div>
+          <button class="qn-fmt-btn" @mousedown.prevent="fmtHighlight"      title="Marcador de texto">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </button>
+          <div class="qn-fmt-divider"></div>
+          <button class="qn-fmt-btn" @mousedown.prevent="insertList(false)" title="Lista com marcadores">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+              <circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/>
+            </svg>
+          </button>
+          <button class="qn-fmt-btn" @mousedown.prevent="insertList(true)"  title="Lista numerada">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/>
+              <path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>
+            </svg>
+          </button>
+          <button class="qn-fmt-btn" @mousedown.prevent="insertChecklist"   title="Checklist">
+            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            </svg>
+          </button>
+          <div class="qn-fmt-spacer"></div>
+          <span class="qn-modal-footer-date">{{ formatDate(activeNote.updated_at) }}</span>
           <span class="qn-saved-hint" v-if="saved">Salvo ✓</span>
         </div>
       </div>
@@ -117,12 +157,21 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useQuickNotesStore } from '@/stores/quickNotes'
 
 const store = useQuickNotesStore()
 
+// Remove dados legados do localStorage (migração para backend)
+localStorage.removeItem('quick_notes')
+
+// Carrega do backend ao abrir o painel pela primeira vez
+watch(() => store.isOpen, (open) => {
+  if (open && !store.notes.length && !store.loading) store.fetch()
+})
+
 const activeNote = ref(null)
+const editorRef  = ref(null)
 const saved = ref(false)
 let saveTimer = null
 
@@ -135,13 +184,19 @@ const colors = [
   { key: 'blue',    bg: 'rgba(59,130,246,.2)',  border: 'rgba(59,130,246,.5)',       label: 'Azul'    },
 ]
 
-function createNote() {
-  const note = store.add()
+async function createNote() {
+  const note = await store.add()
   openModal(note)
 }
 
 function openModal(note) {
   activeNote.value = { ...note }
+  nextTick(() => {
+    if (editorRef.value) {
+      editorRef.value.innerHTML = note.text || ''
+      editorRef.value.focus()
+    }
+  })
 }
 
 function closeModal() {
@@ -149,19 +204,23 @@ function closeModal() {
   saved.value = false
 }
 
+function onEditorInput() {
+  if (!activeNote.value) return
+  activeNote.value.text = editorRef.value?.innerHTML || ''
+  saveActive()
+}
+
 function saveActive() {
   if (!activeNote.value) return
   clearTimeout(saveTimer)
   saved.value = false
-  saveTimer = setTimeout(() => {
-    store.update(activeNote.value.id, {
+  saveTimer = setTimeout(async () => {
+    const updated = await store.update(activeNote.value.id, {
       title: activeNote.value.title,
-      text: activeNote.value.text,
+      text:  activeNote.value.text,
       color: activeNote.value.color,
     })
-    // sync local copy's updatedAt
-    const stored = store.notes.find(n => n.id === activeNote.value.id)
-    if (stored) activeNote.value.updatedAt = stored.updatedAt
+    if (updated) activeNote.value.updated_at = updated.updated_at
     saved.value = true
     setTimeout(() => { saved.value = false }, 2000)
   }, 600)
@@ -177,6 +236,78 @@ function deleteActive() {
   if (!activeNote.value) return
   store.remove(activeNote.value.id)
   closeModal()
+}
+
+// Formatação via Selection API
+function wrapSelection(tag, attrs = {}) {
+  editorRef.value?.focus()
+  const sel = window.getSelection()
+  if (!sel?.rangeCount) return
+  const range = sel.getRangeAt(0)
+  const el = document.createElement(tag)
+  Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v))
+  try {
+    range.surroundContents(el)
+  } catch {
+    const frag = range.extractContents()
+    el.appendChild(frag)
+    range.insertNode(el)
+  }
+  onEditorInput()
+}
+
+function fmt(command) {
+  const map = { bold: 'strong', italic: 'em', underline: 'u' }
+  wrapSelection(map[command])
+}
+
+function fmtHighlight() {
+  wrapSelection('mark', { style: 'background:rgba(124,58,237,0.28);border-radius:3px;padding:0 2px' })
+}
+
+function insertList(ordered) {
+  editorRef.value?.focus()
+  const sel = window.getSelection()
+  if (!sel?.rangeCount) return
+  const range = sel.getRangeAt(0)
+  const list = document.createElement(ordered ? 'ol' : 'ul')
+  list.style.cssText = 'padding-left:20px;margin:4px 0'
+  const li = document.createElement('li')
+  const frag = range.extractContents()
+  li.appendChild(frag.textContent ? frag : document.createTextNode('\u200B'))
+  list.appendChild(li)
+  range.insertNode(list)
+  // posiciona cursor dentro do li
+  const newRange = document.createRange()
+  newRange.setStart(li, li.childNodes.length)
+  newRange.collapse(true)
+  sel.removeAllRanges()
+  sel.addRange(newRange)
+  onEditorInput()
+}
+
+function insertChecklist() {
+  editorRef.value?.focus()
+  const sel = window.getSelection()
+  if (!sel?.rangeCount) return
+  const range = sel.getRangeAt(0)
+  const div = document.createElement('div')
+  div.style.cssText = 'display:flex;align-items:center;gap:6px;margin:2px 0'
+  const cb = document.createElement('input')
+  cb.type = 'checkbox'
+  cb.style.cssText = 'accent-color:#7c3aed;width:14px;height:14px;flex-shrink:0'
+  const span = document.createElement('span')
+  span.appendChild(document.createTextNode('\u200B'))
+  div.appendChild(cb)
+  div.appendChild(span)
+  range.deleteContents()
+  range.insertNode(div)
+  const newRange = document.createRange()
+  newRange.setStart(span, 1)
+  newRange.collapse(true)
+  sel.removeAllRanges()
+  sel.addRange(newRange)
+  onEditorInput()
 }
 
 function formatDate(dateStr) {
@@ -201,35 +332,46 @@ function formatDate(dateStr) {
   top: 50%;
   transform: translateY(-50%);
   z-index: 200;
-  width: 36px;
-  height: 56px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-right: none;
+  width: 42px;
+  height: 64px;
+  background: linear-gradient(160deg, var(--purple-1), #5b21b6);
+  border: none;
   border-radius: var(--radius-sm) 0 0 var(--radius-sm);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  color: var(--text-3);
+  gap: 5px;
+  color: #fff;
   cursor: pointer;
   transition: all var(--transition);
+  box-shadow: -4px 0 20px rgba(124, 58, 237, 0.45);
 }
-.qn-toggle:hover,
+.qn-toggle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(160deg, rgba(255,255,255,0.12), transparent);
+  pointer-events: none;
+}
+.qn-toggle:hover {
+  width: 46px;
+  box-shadow: -6px 0 28px rgba(124, 58, 237, 0.65);
+  background: linear-gradient(160deg, var(--purple-2), var(--purple-1));
+}
 .qn-toggle.active {
-  color: var(--purple-2);
-  background: var(--purple-dim);
-  border-color: rgba(124, 58, 237, 0.4);
+  background: linear-gradient(160deg, #4c1d95, var(--purple-1));
+  box-shadow: -4px 0 24px rgba(124, 58, 237, 0.5);
 }
 .qn-count {
   font-size: 10px;
-  font-weight: 700;
-  color: var(--purple-3);
-  background: var(--purple-dim);
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 99px;
-  padding: 0 4px;
-  min-width: 14px;
+  padding: 1px 5px;
+  min-width: 16px;
   text-align: center;
   line-height: 1.6;
 }
@@ -258,16 +400,19 @@ function formatDate(dateStr) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 14px 10px;
+  padding: 14px 14px 12px;
   border-bottom: 1px solid var(--border-soft);
-  min-height: 52px;
+  min-height: 56px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), transparent);
 }
 .qn-title {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  background: linear-gradient(to right, var(--purple-2), var(--purple-3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: 0.04em;
 }
 .qn-header-actions {
   display: flex;
@@ -296,6 +441,12 @@ function formatDate(dateStr) {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.qn-loading {
+  display: flex;
+  justify-content: center;
+  padding: 32px;
 }
 
 .qn-empty {
