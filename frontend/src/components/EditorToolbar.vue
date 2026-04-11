@@ -65,6 +65,35 @@
       >
         <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
+      <button
+        class="tool-btn uppercase-btn"
+        @click="transformToUppercase"
+        title="Transformar seleção em maiúsculas"
+      >
+        AA
+      </button>
+    </div>
+
+    <div class="toolbar-divider"></div>
+
+    <!-- Emoji picker -->
+    <div class="toolbar-group emoji-wrap">
+      <button
+        class="tool-btn"
+        :class="{ active: showEmojiPicker }"
+        @click.stop="showEmojiPicker = !showEmojiPicker"
+        title="Inserir emoji"
+      >
+        😊
+      </button>
+      <div class="emoji-picker" v-if="showEmojiPicker">
+        <button
+          v-for="emoji in emojis"
+          :key="emoji"
+          class="emoji-item"
+          @click="insertEmoji(emoji)"
+        >{{ emoji }}</button>
+      </div>
     </div>
 
     <div class="toolbar-divider"></div>
@@ -195,6 +224,8 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+
 const props = defineProps({
   editor: Object,
   saving: Boolean,
@@ -203,6 +234,15 @@ const props = defineProps({
 
 const emit = defineEmits(['insert-image', 'export-pdf', 'delete-note'])
 const highlightColors = ['#7c3aed33', '#22c55e33', '#f59e0b33', '#3b82f633']
+
+const showEmojiPicker = ref(false)
+
+const emojis = [
+  '😀','😂','😊','😍','🤔','😎','🥳','😢','😡','😮',
+  '👍','👎','👋','🙏','✌️','💪','👏','🤝','❤️','💔',
+  '✅','❌','⭐','🔥','💡','📌','📝','🎯','🚀','💯',
+  '⚠️','🔴','🟢','🔵','🟡','🎉','⚡','🧠','💬','🔒'
+]
 
 function applyHeading(level) {
   if (level === '0') {
@@ -221,6 +261,34 @@ function insertImage(event) {
 function applyHighlight(color) {
   props.editor.chain().focus().setHighlight({ color }).run()
 }
+
+function transformToUppercase() {
+  if (!props.editor) return
+  const { from, to, empty } = props.editor.state.selection
+  if (empty) return
+  const { tr, doc } = props.editor.state
+  doc.nodesBetween(from, to, (node, pos) => {
+    if (node.isText) {
+      const start = Math.max(pos, from)
+      const end = Math.min(pos + node.nodeSize, to)
+      const upper = node.text.slice(start - pos, end - pos).toUpperCase()
+      tr.insertText(upper, start, end)
+    }
+  })
+  props.editor.view.dispatch(tr)
+}
+
+function insertEmoji(emoji) {
+  props.editor?.chain().focus().insertContent(emoji).run()
+  showEmojiPicker.value = false
+}
+
+function handleClickOutside(e) {
+  if (!e.target.closest('.emoji-wrap')) showEmojiPicker.value = false
+}
+
+onMounted(() => document.addEventListener('click', handleClickOutside))
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 </script>
 
 <style scoped>
@@ -348,5 +416,47 @@ function applyHighlight(color) {
   color: var(--red);
   background: rgba(244, 63, 94, 0.1);
   border-color: rgba(244, 63, 94, 0.3);
+}
+
+.uppercase-btn {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  width: auto;
+  padding: 0 6px;
+}
+
+.emoji-wrap {
+  position: relative;
+}
+
+.emoji-picker {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.emoji-item {
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 4px;
+  transition: background var(--transition);
+}
+
+.emoji-item:hover {
+  background: var(--surface);
 }
 </style>

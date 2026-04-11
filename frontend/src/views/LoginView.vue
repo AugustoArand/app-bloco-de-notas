@@ -9,7 +9,11 @@
     <div class="grid-lines"></div>
 
     <div class="floating-card card-a"><span class="dot"></span>Cadernos inteligentes</div>
+    <div class="floating-card card-b"><span class="dot"></span>Organize seus estudos de forma eficiente</div>
     <div class="floating-card card-b"><span class="dot"></span>Exporte suas notas em PDF</div>
+    <div class="floating-card card-b"><span class="dot"></span>Otimize suas anotações com IA</div>
+    <div class="floating-card card-b"><span class="dot"></span>Faça anotações rápidas</div>
+    <div class="floating-card card-b"><span class="dot"></span>Construa mapas mentais</div>
 
     <div class="auth-card">
       <div class="auth-logo">
