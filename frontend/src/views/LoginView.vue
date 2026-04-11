@@ -8,12 +8,14 @@
     <div class="orb orb-2"></div>
     <div class="grid-lines"></div>
 
-    <div class="floating-card card-a"><span class="dot"></span>Cadernos inteligentes</div>
-    <div class="floating-card card-b"><span class="dot"></span>Organize seus estudos de forma eficiente</div>
-    <div class="floating-card card-b"><span class="dot"></span>Exporte suas notas em PDF</div>
-    <div class="floating-card card-b"><span class="dot"></span>Otimize suas anotações com IA</div>
-    <div class="floating-card card-b"><span class="dot"></span>Faça anotações rápidas</div>
-    <div class="floating-card card-b"><span class="dot"></span>Construa mapas mentais</div>
+    <div
+      v-for="(card, i) in floatingCards"
+      :key="i"
+      class="floating-card"
+      :style="card.style"
+    >
+      <span class="dot"></span>{{ card.text }}
+    </div>
 
     <div class="auth-card">
       <div class="auth-logo">
@@ -92,6 +94,35 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const showPass = ref(false)
+
+// Each card is placed in one of 6 zones (3 left, 3 right) avoiding the center
+// Values are pre-computed so they don't change on re-render
+const floatingCards = [
+  {
+    text: 'Cadernos inteligentes',
+    style: { top: '11%', left: '5%', animationDelay: '-0.8s', animationDuration: '7s' }
+  },
+  {
+    text: 'Organize seus estudos de forma eficiente',
+    style: { top: '44%', left: '3%', animationDelay: '-3.2s', animationDuration: '8.5s' }
+  },
+  {
+    text: 'Faça anotações rápidas',
+    style: { top: '74%', left: '6%', animationDelay: '-5.5s', animationDuration: '6.5s' }
+  },
+  {
+    text: 'Exporte suas notas em PDF',
+    style: { top: '14%', right: '5%', animationDelay: '-1.5s', animationDuration: '9s' }
+  },
+  {
+    text: 'Otimize suas anotações com IA',
+    style: { top: '48%', right: '3%', animationDelay: '-4s', animationDuration: '7.5s' }
+  },
+  {
+    text: 'Construa mapas mentais',
+    style: { top: '76%', right: '5%', animationDelay: '-2.5s', animationDuration: '8s' }
+  },
+]
 
 async function handleLogin() {
   const ok = await auth.login(email.value, password.value)

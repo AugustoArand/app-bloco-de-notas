@@ -174,6 +174,17 @@
       >
         <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1zm12 0c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg>
       </button>
+      <button
+        id="toolbar-cloudblock"
+        class="tool-btn cloud-btn"
+        :class="{ active: editor.isActive('cloudBlock') }"
+        @click="editor.chain().focus().toggleCloudBlock().run()"
+        title="Bloco Nuvem"
+      >
+        <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+        </svg>
+      </button>
     </div>
 
     <div class="toolbar-divider"></div>
@@ -416,6 +427,12 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   color: var(--red);
   background: rgba(244, 63, 94, 0.1);
   border-color: rgba(244, 63, 94, 0.3);
+}
+
+.cloud-btn.active {
+  background: rgba(124, 58, 237, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(124, 58, 237, 0.4);
 }
 
 .uppercase-btn {
