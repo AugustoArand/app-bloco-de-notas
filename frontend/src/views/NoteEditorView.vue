@@ -14,6 +14,30 @@
     <div class="editor-body">
       <!-- Content -->
       <div class="editor-content-area">
+        <!-- Breadcrumb -->
+        <nav class="note-breadcrumb" v-if="note">
+          <router-link to="/" class="breadcrumb-link">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Duck Notes
+          </router-link>
+          <svg class="breadcrumb-sep" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <span class="breadcrumb-segment">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+            </svg>
+            {{ note.notebook_name }}
+          </span>
+          <svg class="breadcrumb-sep" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+          <span class="breadcrumb-segment breadcrumb-current">{{ noteTitle || 'Sem título' }}</span>
+        </nav>
+
         <!-- Title input -->
         <div class="title-area">
           <input
@@ -186,6 +210,7 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import CharacterCount from '@tiptap/extension-character-count'
 import { jsPDF } from 'jspdf'
+import CloudBlock from '@/extensions/CloudBlock'
 
 import EditorToolbar from '@/components/EditorToolbar.vue'
 import TableOfContents from '@/components/TableOfContents.vue'
@@ -275,7 +300,8 @@ const editor = useEditor({
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TaskList,
     TaskItem.configure({ nested: true }),
-    CharacterCount
+    CharacterCount,
+    CloudBlock
   ],
   content: '',
   editorProps: {
@@ -663,6 +689,46 @@ onBeforeUnmount(() => {
 .picker-item:hover { background: var(--surface); }
 .picker-empty { font-size: 12px; color: var(--text-3); text-align: center; padding: 8px; margin: 0; }
 
+/* Breadcrumb */
+.note-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-link {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-3);
+  text-decoration: none;
+  transition: color var(--transition);
+  font-weight: 500;
+}
+.breadcrumb-link:hover { color: var(--purple-3); }
+
+.breadcrumb-sep { color: var(--border); flex-shrink: 0; }
+
+.breadcrumb-segment {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-3);
+  font-weight: 500;
+}
+
+.breadcrumb-current {
+  color: var(--text-2);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .title-input {
   width: 100%;
   background: transparent;
@@ -883,6 +949,59 @@ onBeforeUnmount(() => {
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   color: var(--text-2);
   font-style: italic;
+}
+
+/* Cloud Block */
+.tiptap-content :deep(.cloud-block) {
+  position: relative;
+  margin: 20px 0;
+  padding: 18px 28px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.07), rgba(139, 92, 246, 0.11));
+  border: 2px solid rgba(124, 58, 237, 0.32);
+  border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px;
+  color: #c4b5fd;
+  font-weight: 700;
+  line-height: 1.75;
+  animation: cloudMorph 9s ease-in-out infinite;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.tiptap-content :deep(.cloud-block > *) {
+  color: #c4b5fd;
+  font-weight: 700;
+}
+
+.tiptap-content :deep(.cloud-active) {
+  border-color: rgba(139, 92, 246, 0.65) !important;
+  box-shadow:
+    0 0 0 3px rgba(124, 58, 237, 0.14),
+    0 8px 36px rgba(124, 58, 237, 0.22) !important;
+  animation: cloudMorphActive 5s ease-in-out infinite !important;
+}
+
+@keyframes cloudMorph {
+  0%   { border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px; }
+  25%  { border-radius: 60px 40px 70px 50px / 50px 70px 40px 60px; }
+  50%  { border-radius: 50px 70px 40px 60px / 70px 50px 60px 40px; }
+  75%  { border-radius: 70px 50px 60px 40px / 40px 60px 50px 70px; }
+  100% { border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px; }
+}
+
+@keyframes cloudMorphActive {
+  0%, 100% {
+    border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px;
+    transform: translateY(0px);
+    box-shadow:
+      0 0 0 3px rgba(124, 58, 237, 0.14),
+      0 8px 36px rgba(124, 58, 237, 0.22);
+  }
+  50% {
+    border-radius: 60px 40px 70px 50px / 50px 70px 40px 60px;
+    transform: translateY(-5px);
+    box-shadow:
+      0 0 0 4px rgba(124, 58, 237, 0.2),
+      0 16px 48px rgba(124, 58, 237, 0.32);
+  }
 }
 
 /* Highlight */
