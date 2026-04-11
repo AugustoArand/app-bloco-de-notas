@@ -119,10 +119,16 @@
                 :class="{ active: activeNotebook === nb.id }"
                 @click="selectNotebook(nb)"
               >
-                <div class="notebook-left">
+                <!-- Icon -->
+                <div class="notebook-icon-wrap">
                   <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                   </svg>
+                </div>
+
+                <!-- Name + count stacked -->
+                <div class="notebook-info">
                   <span class="notebook-name" v-if="editingNotebook !== nb.id">{{ nb.name }}</span>
                   <input
                     v-else
@@ -133,8 +139,12 @@
                     @click.stop
                     ref="editInput"
                   />
+                  <span class="notebook-meta">
+                    {{ nb.notes_count }} {{ nb.notes_count === 1 ? 'nota' : 'notas' }}
+                  </span>
                 </div>
-                <span class="note-count">{{ nb.notes_count }}</span>
+
+                <!-- Actions (appear on hover) -->
                 <div class="notebook-actions">
                   <button
                     class="btn-icon tiny"
@@ -153,6 +163,7 @@
                     <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3,6 5,6 21,6"/><path d="M19,6l-1,14H6L5,6"/><path d="M10,11v6"/><path d="M14,11v6"/><path d="M9,6V4h6v2"/></svg>
                   </button>
                 </div>
+
                 <!-- Drill-in arrow -->
                 <svg class="notebook-arrow" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <polyline points="9 18 15 12 9 6"/>
@@ -533,60 +544,106 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 14px;
+  padding: 8px 14px 4px;
   flex-shrink: 0;
 }
 .section-title {
-  font-size: 11px; font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 /* ===== NOTEBOOKS LIST ===== */
 .notebook-list {
   overflow-y: auto;
   flex: 1;
-  padding: 0 6px 6px;
+  padding: 2px 8px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
 }
 
 .notebook-item {
   display: flex;
   align-items: center;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
+  padding: 7px 8px 7px 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background var(--transition);
-  gap: 6px;
+  transition: background var(--transition), border-color var(--transition);
+  gap: 9px;
   border: 1px solid transparent;
+  position: relative;
 }
 .notebook-item:hover { background: var(--panel-hover); }
-.notebook-item:hover .notebook-arrow { opacity: 1; }
+.notebook-item:hover .notebook-arrow { opacity: 1; transform: translateX(2px); }
+.notebook-item:hover .notebook-actions { opacity: 1; }
 .notebook-item.active {
   background: var(--purple-dim);
-  border-color: rgba(124,58,237,0.2);
+  border-color: rgba(124, 58, 237, 0.18);
 }
 
-.notebook-left {
+/* Icon container */
+.notebook-icon-wrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
   display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+.notebook-item:hover .notebook-icon-wrap {
+  background: rgba(124, 58, 237, 0.1);
+  border-color: rgba(124, 58, 237, 0.25);
+  color: var(--purple-2);
+}
+.notebook-item.active .notebook-icon-wrap {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.3);
+  color: var(--purple-2);
+}
+
+/* Name + meta stacked */
+.notebook-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
   min-width: 0;
-  color: var(--text-2);
 }
-.notebook-item.active .notebook-left { color: var(--purple-3); }
+
 .notebook-name {
-  font-size: 13px; font-weight: 500;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
 }
+.notebook-item.active .notebook-name { color: var(--text); }
+
+.notebook-meta {
+  font-size: 10.5px;
+  color: var(--text-3);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+.notebook-item.active .notebook-meta { color: rgba(167, 139, 250, 0.75); }
 
 .notebook-edit-input {
   background: var(--surface);
   border: 1px solid var(--purple-1);
   border-radius: 4px;
   color: var(--text);
-  font-size: 13px;
+  font-size: 12.5px;
   padding: 2px 6px;
   width: 100%;
   outline: none;
@@ -595,29 +652,16 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .notebook-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  opacity: 0;
-  transition: opacity var(--transition);
-}
-.notebook-item:hover .notebook-actions { opacity: 1; }
-
-.notebook-arrow {
-  color: var(--text-3);
+  gap: 1px;
   opacity: 0;
   transition: opacity var(--transition);
   flex-shrink: 0;
 }
 
-.note-count {
-  font-size: 10px; font-weight: 600;
-  color: var(--purple-3);
-  background: var(--purple-dim);
-  border: 1px solid rgba(124, 58, 237, 0.2);
-  padding: 1px 6px;
-  border-radius: 99px;
-  min-width: 18px;
-  text-align: center;
-  line-height: 1.6;
+.notebook-arrow {
+  color: var(--text-3);
+  opacity: 0;
+  transition: opacity var(--transition), transform var(--transition);
   flex-shrink: 0;
 }
 
