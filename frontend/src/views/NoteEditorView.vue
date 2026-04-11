@@ -282,6 +282,20 @@ const editor = useEditor({
     attributes: {
       class: 'tiptap-editor',
       spellcheck: 'true'
+    },
+    handlePaste(view, event) {
+      const types = Array.from(event.clipboardData?.types || [])
+      const hasHtml = types.includes('text/html')
+      const hasText = types.includes('text/plain')
+      if (hasHtml && hasText) {
+        const text = event.clipboardData.getData('text/plain')
+        if (text) {
+          event.preventDefault()
+          view.dispatch(view.state.tr.insertText(text))
+          return true
+        }
+      }
+      return false
     }
   },
   onUpdate() {
