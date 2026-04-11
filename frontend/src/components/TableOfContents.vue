@@ -59,7 +59,7 @@ watch(() => props.editor?.state, () => {
 .toc {
   width: var(--toc-w);
   border-left: 1px solid var(--border-soft);
-  padding: 20px 16px;
+  padding: 20px 12px 20px 14px;
   overflow-y: auto;
   flex-shrink: 0;
   background: var(--panel);
@@ -69,37 +69,98 @@ watch(() => props.editor?.state, () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 12px;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+  padding-left: 6px;
 }
 
-.toc-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
 
+/* ── Base item ── */
 .toc-item {
-  font-size: 12.5px;
-  color: var(--text-2);
   cursor: pointer;
-  padding: 5px 8px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition);
-  line-height: 1.4;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  line-height: 1.35;
   border-left: 2px solid transparent;
-}
-.toc-item:hover {
-  color: var(--text);
-  background: var(--panel-hover);
-}
-.toc-item.active {
-  color: var(--purple-2);
-  border-left-color: var(--purple-1);
-  background: var(--purple-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.toc-item.level-1 { padding-left: 8px; font-weight: 500; }
-.toc-item.level-2 { padding-left: 18px; }
-.toc-item.level-3 { padding-left: 28px; font-size: 12px; color: var(--text-3); }
+.toc-item:hover { background: var(--panel-hover); }
+
+/* ── H1 — máximo destaque ── */
+.toc-item.level-1 {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text);
+  padding: 6px 8px 6px 10px;
+  letter-spacing: 0.01em;
+  margin-top: 4px;
+}
+.toc-item.level-1:first-child { margin-top: 0; }
+
+.toc-item.level-1.active {
+  color: var(--purple-3);
+  border-left-color: var(--purple-2);
+  background: var(--purple-dim);
+  font-weight: 700;
+}
+
+/* ── H2 — destaque médio ── */
+.toc-item.level-2 {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  padding: 5px 8px 5px 20px;
+}
+
+.toc-item.level-2.active {
+  color: var(--purple-2);
+  border-left-color: rgba(124, 58, 237, 0.55);
+  background: rgba(124, 58, 237, 0.07);
+}
+
+/* ── H3 — destaque leve ── */
+.toc-item.level-3 {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text-3);
+  padding: 4px 8px 4px 32px;
+}
+
+.toc-item.level-3.active {
+  color: var(--text-2);
+  border-left-color: rgba(124, 58, 237, 0.3);
+  background: rgba(124, 58, 237, 0.04);
+}
+
+/* ── H4+ — mínimo ── */
+.toc-item.level-4,
+.toc-item.level-5,
+.toc-item.level-6 {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  opacity: 0.7;
+  padding: 3px 8px 3px 42px;
+}
+
+.toc-item.level-4.active,
+.toc-item.level-5.active,
+.toc-item.level-6.active {
+  color: var(--text-3);
+  border-left-color: rgba(124, 58, 237, 0.2);
+  opacity: 1;
+}
 </style>

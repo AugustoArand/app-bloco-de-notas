@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import api from '@/services/api'
+import { useNotebooksStore } from '@/stores/notebooks'
 
 export const useNotesStore = defineStore('notes', {
   state: () => ({
@@ -7,11 +8,13 @@ export const useNotesStore = defineStore('notes', {
     recentNotes: [],
     currentNote: null,
     loading: false,
-    saving: false
+    saving: false,
+    activeNotebookId: null
   }),
 
   actions: {
     async fetchByNotebook(notebookId, query = '') {
+      this.activeNotebookId = notebookId
       this.loading = true
       try {
         const params = query ? { q: query } : {}
@@ -48,6 +51,8 @@ export const useNotesStore = defineStore('notes', {
       })
       this.notes.unshift(res.data)
       this.currentNote = res.data
+      const nb = useNotebooksStore().notebooks.find(n => n.id === notebookId)
+      if (nb) nb.notes_count = (nb.notes_count || 0) + 1
       return res.data
     },
 
@@ -68,6 +73,10 @@ export const useNotesStore = defineStore('notes', {
       await api.delete(`/api/v1/notes/${noteId}`)
       this.notes = this.notes.filter(n => n.id !== noteId)
       if (this.currentNote?.id === noteId) this.currentNote = null
+      if (this.activeNotebookId) {
+        const nb = useNotebooksStore().notebooks.find(n => n.id === this.activeNotebookId)
+        if (nb && nb.notes_count > 0) nb.notes_count--
+      }
     },
 
     async uploadImage(noteId, file) {
