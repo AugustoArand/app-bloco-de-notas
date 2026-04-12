@@ -74,60 +74,98 @@
             </button>
           </div>
 
-          <div class="ai-actions" v-if="editorMode === 'text'">
-            <input
-              v-model="aiQuestion"
-              class="ai-question-input"
-              :disabled="aiLoading"
-              placeholder="Pergunta para 'Gerar texto IA' (opcional para os outros botoes)"
-            />
-            <button
-              class="ai-btn"
-              :disabled="aiLoading || !aiQuestion.trim()"
-              @click="generateTextWithAi"
-            >
-              {{ aiLoading && aiMode === 'generate' ? 'Gerando...' : 'Gerar texto IA' }}
+          <!-- AI Panel -->
+          <div class="ai-panel" v-if="editorMode === 'text'">
+            <button class="ai-toggle" :class="{ open: aiPanelOpen }" @click="aiPanelOpen = !aiPanelOpen">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="color: var(--purple-2)">
+                <path d="M12 2l1.09 6.26L19 7l-3.55 4.87L21 14l-5.55 2.13L19 21l-6.91-5.74L12 22l-1.09-6.26L5 17l3.55-4.87L3 10l5.55-2.13L5 3l6.91 5.74L12 2z"/>
+              </svg>
+              <span>Assistente IA</span>
+              <svg class="ai-chevron" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </button>
-            <button
-              class="ai-btn"
-              :disabled="aiLoading"
-              @click="summarizeWithAi('bullet')"
-            >
-              {{ aiLoading && aiMode === 'summary' ? 'Resumindo...' : 'Resumo IA' }}
-            </button>
-            <button
-              class="ai-btn"
-              :disabled="aiLoading"
-              @click="translateTextWithAi"
-            >
-              {{ aiLoading && aiMode === 'translate-text' ? 'Traduzindo texto...' : 'Traduzir texto IA' }}
-            </button>
-            <button
-              class="ai-btn"
-              :disabled="aiLoading"
-              @click="translateTermsWithAi"
-            >
-              {{ aiLoading && aiMode === 'translate-terms' ? 'Traduzindo termos...' : 'Traduzir termos IA' }}
-            </button>
-            <button
-              v-if="aiResult"
-              class="ai-btn secondary"
-              :disabled="aiLoading"
-              @click="insertAiResultInEditor"
-            >
-              Inserir no texto
-            </button>
+
+            <Transition name="ai-slide">
+              <div class="ai-panel-body" v-if="aiPanelOpen">
+
+                <!-- Loading -->
+                <div class="ai-loading-row" v-if="aiLoading">
+                  <div class="spinner" style="width:13px;height:13px;border-width:1.5px;flex-shrink:0"></div>
+                  <span class="ai-loading-label">{{ aiModeLoadingLabel }}</span>
+                  <button class="ai-cancel-btn" @click="cancelAi">
+                    <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                    Cancelar
+                  </button>
+                </div>
+
+                <!-- Input + chips -->
+                <template v-else>
+                  <div class="ai-input-row">
+                    <input
+                      v-model="aiQuestion"
+                      class="ai-question-input"
+                      placeholder="Descreva o que a IA deve gerar..."
+                    />
+                    <button class="ai-submit-btn" :disabled="!aiQuestion.trim()" @click="generateTextWithAi" title="Gerar">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div class="ai-chips-row">
+                    <button class="ai-chip" @click="summarizeWithAi('bullet')">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/>
+                        <circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/>
+                      </svg>
+                      Resumo
+                    </button>
+                    <button class="ai-chip" @click="translateTextWithAi">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>
+                      </svg>
+                      Traduzir texto
+                    </button>
+                    <button class="ai-chip" @click="translateTermsWithAi">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/>
+                      </svg>
+                      Glossário
+                    </button>
+                  </div>
+                </template>
+
+                <p class="ai-error" v-if="aiError">{{ aiError }}</p>
+              </div>
+            </Transition>
           </div>
 
-          <p class="ai-help" v-if="editorMode === 'text'">
-            Use "Traduzir texto IA" para traduzir o conteudo completo da nota e "Traduzir termos IA" para glossario tecnico.
-          </p>
-
-          <p v-if="aiError" class="ai-error">{{ aiError }}</p>
-          <div v-if="aiResult" class="ai-result">
-            <h4>{{ aiResultTitle }}</h4>
-            <pre>{{ aiResult }}</pre>
-          </div>
+          <!-- AI Result panel -->
+          <Transition name="ai-result-fade">
+            <div class="ai-result-panel" v-if="aiResult">
+              <div class="ai-result-header">
+                <span class="ai-result-label">{{ aiResultTitle }}</span>
+                <div class="ai-result-actions">
+                  <button class="ai-result-insert" @click="insertAiResultInEditor">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <polyline points="9 10 4 15 9 20"/><path d="M20 4v7a4 4 0 0 1-4 4H4"/>
+                    </svg>
+                    Inserir
+                  </button>
+                  <button class="ai-result-close" @click="aiResult = ''; aiError = ''" title="Fechar">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <pre class="ai-result-content">{{ aiResult }}</pre>
+            </div>
+          </Transition>
 
           <!-- Tags panel -->
           <div class="note-tags-panel">
@@ -232,12 +270,14 @@ const showTagPicker = ref(false)
 const editorMode = ref('text')
 const diagramData = ref({ nodes: [], edges: [] })
 const aiLoading = ref(false)
+const aiPanelOpen = ref(false)
 const aiMode = ref('')
 const aiResult = ref('')
 const aiError = ref('')
 const aiQuestion = ref('')
 let saveTimeout = null
 let diagramSaveTimeout = null
+let aiController = null
 
 const availableTags = computed(() => {
   if (!note.value) return []
@@ -246,12 +286,29 @@ const availableTags = computed(() => {
 })
 
 const aiResultTitle = computed(() => {
-  if (aiMode.value === 'summary') return 'Resultado IA - Resumo'
-  if (aiMode.value === 'translate-text') return 'Resultado IA - Traducao de texto'
-  if (aiMode.value === 'translate-terms') return 'Resultado IA - Traducao de termos'
-  if (aiMode.value === 'generate') return 'Resultado IA - Texto gerado'
-  return 'Resultado IA'
+  if (aiMode.value === 'summary') return 'Resumo'
+  if (aiMode.value === 'translate-text') return 'Tradução'
+  if (aiMode.value === 'translate-terms') return 'Glossário'
+  if (aiMode.value === 'generate') return 'Texto gerado'
+  return 'Resultado'
 })
+
+const aiModeLoadingLabel = computed(() => {
+  if (aiMode.value === 'summary') return 'Resumindo...'
+  if (aiMode.value === 'translate-text') return 'Traduzindo...'
+  if (aiMode.value === 'translate-terms') return 'Traduzindo termos...'
+  if (aiMode.value === 'generate') return 'Gerando...'
+  return 'Processando...'
+})
+
+function cancelAi() {
+  if (aiController) {
+    aiController.abort()
+    aiController = null
+  }
+  aiLoading.value = false
+  aiMode.value = ''
+}
 
 function sanitizeEditorContent(html) {
   if (!html) return ''
@@ -461,110 +518,97 @@ function escapeHtml(value) {
 
 async function summarizeWithAi(style = 'bullet') {
   if (!note.value || aiLoading.value) return
-
   const content = getNotePlainText().trim()
-  if (!content) {
-    aiError.value = 'Escreva algum conteudo antes de usar o resumo IA.'
-    return
-  }
+  if (!content) { aiError.value = 'Escreva algum conteúdo antes de resumir.'; return }
 
+  aiController = new AbortController()
   aiLoading.value = true
   aiMode.value = 'summary'
   aiError.value = ''
   aiResult.value = ''
-
   try {
-    const { data } = await api.post('/api/v1/ai/summarize', {
-      title: noteTitle.value,
-      content,
-      style
-    })
+    const { data } = await api.post('/api/v1/ai/summarize',
+      { title: noteTitle.value, content, style },
+      { signal: aiController.signal }
+    )
     aiResult.value = data.result || ''
   } catch (error) {
-    aiError.value = error.response?.data?.error || 'Falha ao gerar resumo com IA.'
+    if (error.code !== 'ERR_CANCELED') aiError.value = error.response?.data?.error || 'Falha ao gerar resumo.'
   } finally {
     aiLoading.value = false
+    aiController = null
   }
 }
 
 async function translateTermsWithAi() {
   if (!note.value || aiLoading.value) return
-
   const content = getNotePlainText().trim()
-  if (!content) {
-    aiError.value = 'Escreva algum conteudo antes de traduzir termos.'
-    return
-  }
+  if (!content) { aiError.value = 'Escreva algum conteúdo antes de traduzir termos.'; return }
 
+  aiController = new AbortController()
   aiLoading.value = true
   aiMode.value = 'translate-terms'
   aiError.value = ''
   aiResult.value = ''
-
   try {
-    const { data } = await api.post('/api/v1/ai/translate_terms', {
-      content,
-      limit: 12
-    })
+    const { data } = await api.post('/api/v1/ai/translate_terms',
+      { content, limit: 12 },
+      { signal: aiController.signal }
+    )
     aiResult.value = data.result || ''
   } catch (error) {
-    aiError.value = error.response?.data?.error || 'Falha ao traduzir termos com IA.'
+    if (error.code !== 'ERR_CANCELED') aiError.value = error.response?.data?.error || 'Falha ao traduzir termos.'
   } finally {
     aiLoading.value = false
+    aiController = null
   }
 }
 
 async function translateTextWithAi() {
   if (!note.value || aiLoading.value) return
-
   const content = getNotePlainText().trim()
-  if (!content) {
-    aiError.value = 'Escreva algum conteudo antes de traduzir o texto.'
-    return
-  }
+  if (!content) { aiError.value = 'Escreva algum conteúdo antes de traduzir.'; return }
 
+  aiController = new AbortController()
   aiLoading.value = true
   aiMode.value = 'translate-text'
   aiError.value = ''
   aiResult.value = ''
-
   try {
-    const { data } = await api.post('/api/v1/ai/translate_text', {
-      content,
-      target_language: 'ingles'
-    })
+    const { data } = await api.post('/api/v1/ai/translate_text',
+      { content, target_language: 'ingles' },
+      { signal: aiController.signal }
+    )
     aiResult.value = data.result || ''
   } catch (error) {
-    aiError.value = error.response?.data?.error || 'Falha ao traduzir o texto com IA.'
+    if (error.code !== 'ERR_CANCELED') aiError.value = error.response?.data?.error || 'Falha ao traduzir o texto.'
   } finally {
     aiLoading.value = false
+    aiController = null
   }
 }
 
 async function generateTextWithAi() {
   if (!note.value || aiLoading.value) return
-
   const question = aiQuestion.value.trim()
-  if (!question) {
-    aiError.value = 'Digite uma pergunta para gerar texto com IA.'
-    return
-  }
+  if (!question) { aiError.value = 'Digite uma instrução para gerar texto.'; return }
 
+  aiController = new AbortController()
   aiLoading.value = true
   aiMode.value = 'generate'
   aiError.value = ''
   aiResult.value = ''
-
   try {
-    const { data } = await api.post('/api/v1/ai/generate_text', {
-      question,
-      context: getNotePlainText().trim()
-    })
+    const { data } = await api.post('/api/v1/ai/generate_text',
+      { question, context: getNotePlainText().trim() },
+      { signal: aiController.signal }
+    )
     aiResult.value = data.result || ''
   } catch (error) {
-    aiError.value = error.response?.data?.error || 'Falha ao gerar texto com IA.'
+    if (error.code !== 'ERR_CANCELED') aiError.value = error.response?.data?.error || 'Falha ao gerar texto.'
   } finally {
     aiLoading.value = false
+    aiController = null
   }
 }
 
@@ -755,90 +799,254 @@ onBeforeUnmount(() => {
   margin-top: 12px;
 }
 
-.ai-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.ai-question-input {
-  flex: 1;
-  min-width: 260px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
+/* ===== AI PANEL ===== */
+.ai-panel {
+  margin-top: 12px;
+  border: 1px solid var(--border-soft);
   border-radius: 10px;
-  padding: 6px 10px;
-  font-size: 12px;
-  outline: none;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.012);
 }
 
-.ai-question-input:focus {
-  border-color: var(--purple-1);
-}
-
-.ai-help {
-  margin: 8px 0 0;
-  color: var(--text-3);
-  font-size: 12px;
-}
-
-.ai-btn {
-  border: 1px solid var(--border);
-  background: var(--surface);
+.ai-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 9px 13px;
+  background: none;
+  border: none;
   color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: color var(--transition);
+}
+.ai-toggle:hover { color: var(--text); }
+.ai-toggle.open { color: var(--purple-3); }
+
+.ai-chevron {
+  margin-left: auto;
+  color: var(--text-3);
+  transition: transform 0.2s ease;
+}
+.ai-toggle.open .ai-chevron { transform: rotate(180deg); }
+
+.ai-panel-body {
+  border-top: 1px solid var(--border-soft);
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* Loading row */
+.ai-loading-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 2px 0;
+}
+.ai-loading-label {
+  font-size: 12.5px;
+  color: var(--purple-3);
+  flex: 1;
+}
+.ai-cancel-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
   border-radius: 99px;
-  padding: 5px 12px;
-  font-size: 12px;
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  background: rgba(244, 63, 94, 0.07);
+  color: var(--red);
+  font-size: 11.5px;
+  font-family: 'Inter', sans-serif;
   cursor: pointer;
   transition: all var(--transition);
 }
-
-.ai-btn:hover:not(:disabled) {
-  border-color: var(--purple-1);
-  color: var(--text);
+.ai-cancel-btn:hover {
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.5);
 }
 
-.ai-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+/* Input row */
+.ai-input-row {
+  display: flex;
+  gap: 6px;
 }
-
-.ai-btn.secondary {
-  border-style: dashed;
-}
-
-.ai-error {
-  margin: 10px 0 0;
-  font-size: 12px;
-  color: #ef4f4f;
-}
-
-.ai-result {
-  margin-top: 10px;
+.ai-question-input {
+  flex: 1;
+  background: var(--surface);
   border: 1px solid var(--border);
-  background: var(--panel);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: 'Inter', sans-serif;
+  padding: 7px 10px;
+  outline: none;
+  transition: border-color var(--transition);
 }
+.ai-question-input:focus { border-color: var(--purple-1); }
+.ai-question-input::placeholder { color: var(--text-3); }
 
-.ai-result h4 {
-  margin: 0 0 8px;
-  font-size: 12px;
+.ai-submit-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--purple-dim);
+  color: var(--purple-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition);
+}
+.ai-submit-btn:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.22);
+  color: var(--purple-3);
+}
+.ai-submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Chips */
+.ai-chips-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.ai-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--surface);
   color: var(--text-2);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 11.5px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ai-chip:hover {
+  border-color: rgba(124, 58, 237, 0.45);
+  color: var(--purple-3);
+  background: var(--purple-dim);
 }
 
-.ai-result pre {
+/* Error inside panel */
+.ai-error {
   margin: 0;
+  font-size: 12px;
+  color: var(--red);
+  background: rgba(244, 63, 94, 0.07);
+  border: 1px solid rgba(244, 63, 94, 0.2);
+  border-radius: 6px;
+  padding: 7px 10px;
+}
+
+/* ===== AI RESULT PANEL ===== */
+.ai-result-panel {
+  margin-top: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.ai-result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  background: rgba(124, 58, 237, 0.04);
+}
+.ai-result-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--purple-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.ai-result-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-result-insert {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 11px;
+  border-radius: 99px;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  background: var(--purple-dim);
+  color: var(--purple-3);
+  font-size: 11.5px;
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ai-result-insert:hover { background: rgba(124, 58, 237, 0.2); }
+.ai-result-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ai-result-close:hover { background: rgba(244, 63, 94, 0.1); color: var(--red); }
+
+.ai-result-content {
+  margin: 0;
+  padding: 14px;
   white-space: pre-wrap;
   word-break: break-word;
   font-family: 'JetBrains Mono', monospace;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.65;
   color: var(--text);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Transitions */
+.ai-slide-enter-active,
+.ai-slide-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+.ai-slide-enter-from,
+.ai-slide-leave-to {
+  opacity: 0;
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+.ai-slide-enter-to,
+.ai-slide-leave-from {
+  max-height: 200px;
+}
+
+.ai-result-fade-enter-active,
+.ai-result-fade-leave-active {
+  transition: all 0.2s ease;
+}
+.ai-result-fade-enter-from,
+.ai-result-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
 }
 
 .mode-btn {
