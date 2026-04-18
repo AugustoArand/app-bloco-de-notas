@@ -1355,46 +1355,49 @@ onBeforeUnmount(() => {
   font-style: italic;
 }
 
-/* Cloud Block — forma real de nuvem via pseudo-elementos + drop-shadow unificado */
+/* Cloud Block */
 .tiptap-content :deep(.cloud-block) {
   position: relative;
-  margin: 60px 8px 32px;
+  margin: 76px 8px 32px;
   padding: 22px 40px 26px;
-  background: rgba(217, 119, 6, 0.10);
+  background: rgba(217, 119, 6, 0.12);
   border-radius: 50px;
+  border: 1.5px solid rgba(217, 119, 6, 0.45);
   color: #fcd34d;
   font-weight: 600;
   line-height: 1.8;
-  filter:
-    drop-shadow(0 0 1px rgba(217, 119, 6, 0.7))
-    drop-shadow(0 0 1px rgba(217, 119, 6, 0.5))
-    drop-shadow(0 6px 20px rgba(0, 0, 0, 0.35));
   animation: cloudFloat 6s ease-in-out infinite;
-  transition: filter 0.4s ease;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* Protuberância grande (centro) */
+/* Protuberância grande (centro) — fica acima do corpo, z-index: -1 para não cobrir texto */
 .tiptap-content :deep(.cloud-block::before) {
   content: '';
   position: absolute;
-  background: rgba(217, 119, 6, 0.10);
+  background: rgba(217, 119, 6, 0.12);
+  border: 1.5px solid rgba(217, 119, 6, 0.45);
+  border-bottom-color: rgba(217, 119, 6, 0.12);
   border-radius: 50%;
-  width: 52%;
-  height: 80px;
-  top: -50px;
-  left: 22%;
+  width: 50%;
+  height: 68px;
+  top: -60px;
+  left: 23%;
+  z-index: -1;
 }
 
 /* Protuberância pequena (esquerda) */
 .tiptap-content :deep(.cloud-block::after) {
   content: '';
   position: absolute;
-  background: rgba(217, 119, 6, 0.10);
+  background: rgba(217, 119, 6, 0.12);
+  border: 1.5px solid rgba(217, 119, 6, 0.45);
+  border-bottom-color: rgba(217, 119, 6, 0.12);
   border-radius: 50%;
-  width: 30%;
-  height: 54px;
-  top: -32px;
-  left: 6%;
+  width: 28%;
+  height: 48px;
+  top: -42px;
+  left: 7%;
+  z-index: -1;
 }
 
 .tiptap-content :deep(.cloud-block > *) {
@@ -1405,10 +1408,10 @@ onBeforeUnmount(() => {
 }
 
 .tiptap-content :deep(.cloud-active) {
-  filter:
-    drop-shadow(0 0 1.5px rgba(217, 119, 6, 1))
-    drop-shadow(0 0 1px rgba(217, 119, 6, 0.7))
-    drop-shadow(0 8px 28px rgba(217, 119, 6, 0.3)) !important;
+  border-color: rgba(217, 119, 6, 0.8) !important;
+  box-shadow:
+    0 0 0 3px rgba(217, 119, 6, 0.15),
+    0 8px 32px rgba(217, 119, 6, 0.2) !important;
   animation: cloudFloatActive 3s ease-in-out infinite !important;
 }
 
