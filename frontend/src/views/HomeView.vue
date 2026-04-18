@@ -211,7 +211,7 @@ const coverStyle = computed(() => {
   if (coverImage.value) {
     return { backgroundImage: `url(${coverImage.value})`, backgroundSize: 'cover', backgroundPosition: 'center' }
   }
-  return { background: 'linear-gradient(135deg, #1e1030 0%, #2d1b69 40%, #1a0f3e 70%, #0d0820 100%)' }
+  return { background: 'linear-gradient(135deg, #1a1208 0%, #2d1f0a 40%, #1c1410 70%, #100e08 100%)' }
 })
 
 function triggerCoverPick() {
@@ -396,11 +396,9 @@ onMounted(async () => {
 }
 .user-name {
   font-size: 32px;
-  font-weight: 800;
+  font-weight: 700;
   margin: 0 0 4px;
-  background: linear-gradient(120deg, var(--text), var(--purple-3));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
   line-height: 1.2;
 }
 .wave { display: inline-block; animation: wave 2s ease-in-out infinite; transform-origin: 70% 70%; }
@@ -436,8 +434,8 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 .stat-icon.purple { background: var(--purple-dim); color: var(--purple-2); }
-.stat-icon.blue  { background: rgba(59,130,246,0.12); color: #60a5fa; }
-.stat-icon.amber { background: rgba(245,158,11,0.12); color: #fbbf24; }
+.stat-icon.blue  { background: rgba(45,212,191,0.12); color: #2dd4bf; }
+.stat-icon.amber { background: rgba(251,146,60,0.12); color: #fb923c; }
 .stat-value { font-size: 15px; font-weight: 700; color: var(--text); }
 .stat-label { font-size: 12px; color: var(--text-3); }
 
@@ -461,8 +459,8 @@ onMounted(async () => {
   border-radius: 50%;
   flex-shrink: 0;
 }
-.section-dot.recent   { background: var(--purple-2); box-shadow: 0 0 8px var(--purple-1); }
-.section-dot.notebooks { background: #60a5fa; box-shadow: 0 0 8px rgba(59,130,246,0.4); }
+.section-dot.recent   { background: var(--purple-2); box-shadow: 0 0 8px rgba(217,119,6,0.5); }
+.section-dot.notebooks { background: #2dd4bf; box-shadow: 0 0 8px rgba(45,212,191,0.4); }
 .section-heading {
   font-size: 13px;
   font-weight: 700;
@@ -531,16 +529,16 @@ onMounted(async () => {
   position: relative;
 }
 .nb-card:hover {
-  border-color: rgba(59,130,246,0.4);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+  border-color: rgba(217,119,6,0.4);
+  box-shadow: 0 0 0 3px rgba(217,119,6,0.08);
   transform: translateY(-1px);
 }
 .nb-icon {
   width: 36px; height: 36px;
-  background: rgba(59,130,246,0.1);
+  background: rgba(217,119,6,0.1);
   border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
-  color: #60a5fa;
+  color: var(--purple-2);
   flex-shrink: 0;
 }
 .nb-info { flex: 1; min-width: 0; }
