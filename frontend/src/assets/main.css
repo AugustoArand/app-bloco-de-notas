@@ -1,29 +1,29 @@
 /* ============================================
-   NoteVault — Global Design System
-   Paleta Preto + Roxo
+   Duck Notes — Global Design System
+   Paleta Bear / Obsidian — tons quentes âmbar
    ============================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 /* ---------- CSS Variables ---------- */
 :root {
-  --bg:          #0a0a0f;
-  --surface:     #11111a;
-  --panel:       #17172a;
-  --panel-hover: #1e1e32;
-  --border:      #252540;
-  --border-soft: #1e1e33;
+  --bg:          #1c1814;
+  --surface:     #211d18;
+  --panel:       #191510;
+  --panel-hover: #231f19;
+  --border:      #2e2820;
+  --border-soft: #251f18;
 
-  --purple-1:    #7c3aed;
-  --purple-2:    #9f67ff;
-  --purple-3:    #c4b5fd;
-  --purple-glow: rgba(124, 58, 237, 0.35);
-  --purple-dim:  rgba(124, 58, 237, 0.1);
+  --purple-1:    #d97706;
+  --purple-2:    #f59e0b;
+  --purple-3:    #fcd34d;
+  --purple-glow: rgba(217, 119, 6, 0.35);
+  --purple-dim:  rgba(217, 119, 6, 0.12);
 
-  --text:        #e2e4f0;
-  --text-2:      #a0a3b1;
-  --text-3:      #5a5d70;
-  --text-invert: #0a0a0f;
+  --text:        #e8dfd4;
+  --text-2:      #9a8f84;
+  --text-3:      #5a5040;
+  --text-invert: #1c1814;
 
   --green:       #22c55e;
   --red:         #f43f5e;
@@ -34,10 +34,10 @@
   --radius-lg:   16px;
   --radius-xl:   24px;
 
-  --shadow-sm:   0 1px 3px rgba(0,0,0,0.4);
-  --shadow:      0 4px 20px rgba(0,0,0,0.5);
-  --shadow-lg:   0 8px 40px rgba(0,0,0,0.6);
-  --shadow-purple: 0 0 30px rgba(124, 58, 237, 0.2);
+  --shadow-sm:   0 1px 3px rgba(0,0,0,0.5);
+  --shadow:      0 4px 20px rgba(0,0,0,0.6);
+  --shadow-lg:   0 8px 40px rgba(0,0,0,0.7);
+  --shadow-purple: 0 0 20px rgba(217, 119, 6, 0.2);
 
   --transition:  0.2s ease;
   --transition-slow: 0.4s ease;

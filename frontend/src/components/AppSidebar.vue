@@ -497,7 +497,7 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .nav-home.active {
   background: var(--purple-dim);
   color: var(--purple-3);
-  border: 1px solid rgba(124,58,237,0.2);
+  border: 1px solid rgba(217,119,6,0.2);
 }
 
 /* ===== SEARCH ===== */
@@ -581,7 +581,7 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .notebook-item:hover .notebook-actions { opacity: 1; }
 .notebook-item.active {
   background: var(--purple-dim);
-  border-color: rgba(124, 58, 237, 0.18);
+  border-color: rgba(217, 119, 6, 0.18);
 }
 
 /* Icon container */
@@ -599,13 +599,13 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
   transition: all var(--transition);
 }
 .notebook-item:hover .notebook-icon-wrap {
-  background: rgba(124, 58, 237, 0.1);
-  border-color: rgba(124, 58, 237, 0.25);
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.25);
   color: var(--purple-2);
 }
 .notebook-item.active .notebook-icon-wrap {
-  background: rgba(124, 58, 237, 0.15);
-  border-color: rgba(124, 58, 237, 0.3);
+  background: rgba(217, 119, 6, 0.15);
+  border-color: rgba(217, 119, 6, 0.3);
   color: var(--purple-2);
 }
 
@@ -636,7 +636,7 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
   line-height: 1;
   letter-spacing: 0.01em;
 }
-.notebook-item.active .notebook-meta { color: rgba(167, 139, 250, 0.75); }
+.notebook-item.active .notebook-meta { color: rgba(252, 211, 77, 0.7); }
 
 .notebook-edit-input {
   background: var(--surface);
@@ -689,7 +689,7 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .note-item:hover { background: var(--panel-hover); }
 .note-item.active {
   background: var(--purple-dim);
-  border-color: rgba(124,58,237,0.2);
+  border-color: rgba(217,119,6,0.2);
 }
 
 .note-item-left {

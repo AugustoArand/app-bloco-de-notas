@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Duck Notes — Propostas de Interface</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    /* ─── NAV DE SELEÇÃO ─── */
+    .selector {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 999;
+      background: rgba(10,10,10,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+    }
+    .selector-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+      margin-right: 8px;
+    }
+    .tab {
+      padding: 6px 16px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: transparent;
+      color: #666;
+    }
+    .tab:hover { color: #ccc; border-color: #333; }
+    .tab.active { color: #fff; background: #1e1e1e; border-color: #333; }
+
+    .proposal { display: none; padding-top: 56px; height: 100vh; }
+    .proposal.active { display: block; }
+
+
+    /* ══════════════════════════════════════════════════════════
+       PROPOSTA 1 — GHOST / LINEAR STYLE
+       Ultra minimal, monocromático, tipografia densa.
+       Inspirado em: Linear, Raycast, Ghost Editor
+    ══════════════════════════════════════════════════════════ */
+    #p1 {
+      --p1-bg: #0d0d0d;
+      --p1-sidebar: #111;
+      --p1-border: #1e1e1e;
+      --p1-text: #888;
+      --p1-text-hi: #e8e8e8;
+      --p1-accent: #5e6ad2;
+      --p1-tag: #1a1a2e;
+      background: var(--p1-bg);
+      font-family: 'Inter', system-ui, sans-serif;
+    }
+    .p1-shell {
+      display: flex;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    /* Sidebar estreita */
+    .p1-sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--p1-sidebar);
+      border-right: 1px solid var(--p1-border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+    }
+    .p1-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 16px 20px;
+      border-bottom: 1px solid var(--p1-border);
+      margin-bottom: 8px;
+    }
+    .p1-logo-icon {
+      width: 24px; height: 24px;
+      background: var(--p1-accent);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+    }
+    .p1-logo-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--p1-text-hi);
+      letter-spacing: -0.2px;
+    }
+    .p1-nav-section {
+      padding: 4px 8px;
+      margin-bottom: 16px;
+    }
+    .p1-nav-title {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #3a3a3a;
+      padding: 0 8px;
+      margin-bottom: 4px;
+    }
+    .p1-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 5px;
+      font-size: 13px;
+      color: var(--p1-text);
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    .p1-nav-item:hover, .p1-nav-item.active {
+      background: #1a1a1a;
+      color: var(--p1-text-hi);
+    }
+    .p1-nav-item.active { background: #1c1c2e; color: var(--p1-accent); }
+    .p1-nav-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.5;
+    }
+    .p1-nav-count {
+      margin-left: auto;
+      font-size: 11px;
+      color: #3a3a3a;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Lista de notas */
+    .p1-list {
+      width: 280px;
+      min-width: 280px;
+      border-right: 1px solid var(--p1-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .p1-list-header {
+      padding: 16px 20px 12px;
+      border-bottom: 1px solid var(--p1-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .p1-list-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--p1-text-hi);
+    }
+    .p1-list-new {
+      width: 22px; height: 22px;
+      background: var(--p1-accent);
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      color: #fff;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .p1-search {
+      padding: 10px 20px;
+      border-bottom: 1px solid var(--p1-border);
+    }
+    .p1-search input {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid var(--p1-border);
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--p1-text-hi);
+      outline: none;
+    }
+    .p1-search input::placeholder { color: #3a3a3a; }
+    .p1-notes { flex: 1; overflow-y: auto; }
+    .p1-note-item {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--p1-border);
+      cursor: pointer;
+    }
+    .p1-note-item:hover { background: #141414; }
+    .p1-note-item.active { background: #141420; border-left: 2px solid var(--p1-accent); }
+    .p1-note-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .p1-note-date {
+      font-size: 10px;
+      color: #3a3a3a;
+      font-variant-numeric: tabular-nums;
+    }
+    .p1-note-tag {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      background: var(--p1-tag);
+      color: var(--p1-accent);
+    }
+    .p1-note-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--p1-text-hi);
+      margin-bottom: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .p1-note-preview {
+      font-size: 11px;
+      color: #444;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Editor */
+    .p1-editor {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .p1-editor-top {
+      padding: 14px 32px;
+      border-bottom: 1px solid var(--p1-border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .p1-editor-action {
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--p1-text);
+      border: 1px solid var(--p1-border);
+      cursor: pointer;
+      margin-left: auto;
+    }
+    .p1-editor-action.primary {
+      background: var(--p1-accent);
+      border-color: var(--p1-accent);
+      color: #fff;
+    }
+    .p1-editor-body {
+      flex: 1;
+      padding: 40px 80px;
+      overflow-y: auto;
+      max-width: 760px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .p1-doc-tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      background: var(--p1-tag);
+      color: var(--p1-accent);
+      margin-bottom: 20px;
+    }
+    .p1-doc-h1 {
+      font-size: 28px;
+      font-weight: 600;
+      color: var(--p1-text-hi);
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+    .p1-doc-meta {
+      font-size: 11px;
+      color: #333;
+      margin-bottom: 32px;
+    }
+    .p1-doc-p {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #666;
+      margin-bottom: 20px;
+    }
+    .p1-doc-h2 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--p1-text-hi);
+      margin: 32px 0 12px;
+    }
+    .p1-cursor {
+      display: inline-block;
+      width: 2px; height: 16px;
+      background: var(--p1-accent);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* Label da proposta */
+    .p1-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--p1-accent);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+
+    /* ══════════════════════════════════════════════════════════
+       PROPOSTA 2 — CRAFT / APPLE STYLE
+       Branco puro, sombras sutis, cantos arredondados, ícones.
+       Inspirado em: Craft, Apple Notes, Cron
+    ══════════════════════════════════════════════════════════ */
+    #p2 {
+      --p2-bg: #f5f4f0;
+      --p2-sidebar: #f0ede8;
+      --p2-card: #fff;
+      --p2-border: rgba(0,0,0,0.06);
+      --p2-text: #6b6870;
+      --p2-text-hi: #1a1820;
+      --p2-accent: #8b5cf6;
+      --p2-accent-soft: #ede9fe;
+      --p2-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 8px 24px rgba(0,0,0,0.06);
+      background: var(--p2-bg);
+    }
+    .p2-shell {
+      display: flex;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+    }
+
+    .p2-sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: var(--p2-sidebar);
+      border-right: 1px solid var(--p2-border);
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .p2-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 4px 8px 16px;
+      margin-bottom: 4px;
+    }
+    .p2-logo-icon {
+      width: 32px; height: 32px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(139,92,246,0.3);
+    }
+    .p2-logo-text { font-size: 15px; font-weight: 700; color: var(--p2-text-hi); letter-spacing: -0.3px; }
+    .p2-logo-sub { font-size: 11px; color: var(--p2-text); }
+
+    .p2-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--p2-text);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .p2-nav-item:hover { background: rgba(0,0,0,0.04); color: var(--p2-text-hi); }
+    .p2-nav-item.active { background: var(--p2-accent-soft); color: var(--p2-accent); }
+    .p2-nav-icon {
+      width: 28px; height: 28px;
+      border-radius: 7px;
+      background: rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+    .p2-nav-item.active .p2-nav-icon { background: var(--p2-accent); filter: none; }
+    .p2-nav-count { margin-left: auto; font-size: 11px; color: var(--p2-text); font-weight: 600; }
+
+    .p2-divider { height: 1px; background: var(--p2-border); margin: 8px 0; }
+    .p2-section-title {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #bbb; padding: 4px 12px;
+    }
+
+    /* Área principal com grid de cards */
+    .p2-main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 28px 32px;
+    }
+    .p2-top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .p2-greeting { font-size: 22px; font-weight: 700; color: var(--p2-text-hi); letter-spacing: -0.4px; }
+    .p2-greeting span { color: var(--p2-accent); }
+    .p2-search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--p2-card);
+      border: 1px solid var(--p2-border);
+      border-radius: 12px;
+      padding: 8px 14px;
+      box-shadow: var(--p2-shadow);
+      width: 220px;
+    }
+    .p2-search-box span { font-size: 14px; }
+    .p2-search-box input {
+      border: none; outline: none; background: transparent;
+      font-size: 13px; color: var(--p2-text-hi); width: 100%;
+    }
+    .p2-search-box input::placeholder { color: #bbb; }
+
+    .p2-section-h { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #bbb; margin-bottom: 12px; }
+
+    .p2-stats-row {
+      display: flex; gap: 12px; margin-bottom: 28px;
+    }
+    .p2-stat {
+      flex: 1;
+      background: var(--p2-card);
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: var(--p2-shadow);
+      border: 1px solid var(--p2-border);
+    }
+    .p2-stat-num { font-size: 28px; font-weight: 700; color: var(--p2-text-hi); letter-spacing: -1px; }
+    .p2-stat-label { font-size: 11px; color: var(--p2-text); margin-top: 2px; }
+    .p2-stat-icon { font-size: 20px; margin-bottom: 8px; }
+
+    .p2-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .p2-card {
+      background: var(--p2-card);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: var(--p2-shadow);
+      border: 1px solid var(--p2-border);
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .p2-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 16px 40px rgba(0,0,0,0.08); }
+    .p2-card-nb {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600; color: var(--p2-text);
+      background: var(--p2-bg);
+      border-radius: 6px; padding: 2px 7px; margin-bottom: 10px;
+    }
+    .p2-card-title { font-size: 14px; font-weight: 600; color: var(--p2-text-hi); margin-bottom: 6px; letter-spacing: -0.2px; }
+    .p2-card-preview { font-size: 12px; color: var(--p2-text); line-height: 1.5; margin-bottom: 10px; }
+    .p2-card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .p2-card-date { font-size: 10px; color: #bbb; }
+    .p2-card-tag {
+      font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 6px;
+      background: var(--p2-accent-soft); color: var(--p2-accent);
+    }
+
+    .p2-new-btn {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--p2-accent);
+      color: #fff; border-radius: 12px; padding: 10px 18px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 4px 12px rgba(139,92,246,0.35);
+    }
+
+    .p2-badge {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--p2-accent); color: #fff;
+      font-size: 11px; font-weight: 600; padding: 6px 12px;
+      border-radius: 20px; letter-spacing: 0.05em;
+      box-shadow: 0 4px 12px rgba(139,92,246,0.4);
+    }
+
+
+    /* ══════════════════════════════════════════════════════════
+       PROPOSTA 3 — BEAR / OBSIDIAN STYLE
+       Tom quente escuro, tipografia editorial, foco total no texto.
+       Inspirado em: Bear, iA Writer, Obsidian
+    ══════════════════════════════════════════════════════════ */
+    #p3 {
+      --p3-bg: #1c1814;
+      --p3-sidebar: #191510;
+      --p3-list: #1f1b16;
+      --p3-border: #2e2820;
+      --p3-text: #9a8f84;
+      --p3-text-hi: #e8dfd4;
+      --p3-accent: #d97706;
+      --p3-accent-soft: rgba(217,119,6,0.12);
+      background: var(--p3-bg);
+      font-family: 'Georgia', 'Times New Roman', serif;
+    }
+    .p3-shell { display: flex; height: calc(100vh - 56px); overflow: hidden; }
+
+    .p3-sidebar {
+      width: 200px; min-width: 200px;
+      background: var(--p3-sidebar);
+      border-right: 1px solid var(--p3-border);
+      display: flex; flex-direction: column;
+      padding: 20px 0;
+    }
+    .p3-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 16px 20px;
+      border-bottom: 1px solid var(--p3-border);
+    }
+    .p3-logo-bear { font-size: 20px; }
+    .p3-logo-name { font-size: 16px; font-weight: 400; color: var(--p3-text-hi); font-family: Georgia, serif; }
+    .p3-nav { padding: 12px 8px; flex: 1; }
+    .p3-nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 8px; border-radius: 6px;
+      font-size: 13px; font-family: system-ui, sans-serif;
+      color: var(--p3-text); cursor: pointer;
+      transition: all 0.12s;
+    }
+    .p3-nav-item:hover { background: rgba(255,255,255,0.04); color: var(--p3-text-hi); }
+    .p3-nav-item.active { background: var(--p3-accent-soft); color: var(--p3-accent); }
+    .p3-nav-icon { font-size: 14px; width: 18px; text-align: center; }
+    .p3-nav-count { margin-left: auto; font-size: 11px; color: #3a3026; }
+
+    .p3-tags-title {
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: #3a3026; padding: 12px 16px 6px; font-family: system-ui, sans-serif;
+    }
+    .p3-tag-pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 16px; font-size: 12px; font-family: system-ui, sans-serif;
+      color: var(--p3-text); cursor: pointer;
+    }
+    .p3-tag-pill:hover { color: var(--p3-text-hi); }
+    .p3-tag-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+    /* Lista de notas */
+    .p3-list {
+      width: 260px; min-width: 260px;
+      background: var(--p3-list);
+      border-right: 1px solid var(--p3-border);
+      display: flex; flex-direction: column;
+    }
+    .p3-list-header {
+      padding: 16px 18px 10px;
+      border-bottom: 1px solid var(--p3-border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .p3-list-title {
+      font-size: 16px; font-weight: 400;
+      color: var(--p3-text-hi); font-family: Georgia, serif;
+    }
+    .p3-list-search {
+      padding: 10px 18px; border-bottom: 1px solid var(--p3-border);
+    }
+    .p3-list-search input {
+      width: 100%; background: rgba(255,255,255,0.04);
+      border: 1px solid var(--p3-border); border-radius: 6px;
+      padding: 6px 10px; font-size: 12px; font-family: system-ui, sans-serif;
+      color: var(--p3-text-hi); outline: none;
+    }
+    .p3-list-search input::placeholder { color: #3a3026; }
+    .p3-notes { flex: 1; overflow-y: auto; }
+    .p3-note-item {
+      padding: 14px 18px; border-bottom: 1px solid var(--p3-border);
+      cursor: pointer; transition: background 0.1s;
+    }
+    .p3-note-item:hover { background: rgba(255,255,255,0.02); }
+    .p3-note-item.active { background: var(--p3-accent-soft); border-left: 2px solid var(--p3-accent); }
+    .p3-note-title {
+      font-size: 14px; font-weight: 400; color: var(--p3-text-hi);
+      margin-bottom: 4px; font-family: Georgia, serif;
+    }
+    .p3-note-preview {
+      font-size: 11px; color: var(--p3-text); font-family: system-ui, sans-serif;
+      line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .p3-note-date {
+      font-size: 10px; color: #3a3026; margin-top: 6px;
+      font-family: system-ui, sans-serif; font-variant-numeric: tabular-nums;
+    }
+
+    /* Editor focado */
+    .p3-editor { flex: 1; display: flex; flex-direction: column; }
+    .p3-editor-bar {
+      padding: 12px 40px; border-bottom: 1px solid var(--p3-border);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .p3-fmt-btn {
+      padding: 4px 8px; border-radius: 4px; font-size: 12px;
+      font-family: system-ui, sans-serif; color: var(--p3-text);
+      border: 1px solid var(--p3-border); cursor: pointer;
+      background: transparent;
+    }
+    .p3-fmt-btn:hover { color: var(--p3-text-hi); border-color: #4a3e30; }
+    .p3-fmt-sep { width: 1px; height: 18px; background: var(--p3-border); margin: 0 4px; }
+    .p3-focus-toggle {
+      margin-left: auto; padding: 4px 12px;
+      border-radius: 4px; font-size: 11px; font-family: system-ui, sans-serif;
+      background: var(--p3-accent-soft); color: var(--p3-accent);
+      border: 1px solid rgba(217,119,6,0.2); cursor: pointer;
+    }
+
+    .p3-editor-body {
+      flex: 1; overflow-y: auto;
+      padding: 60px 0;
+      display: flex; justify-content: center;
+    }
+    .p3-doc { width: 600px; max-width: 90%; }
+    .p3-doc-h1 {
+      font-size: 32px; font-weight: 400; color: var(--p3-text-hi);
+      letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 8px;
+      font-family: Georgia, serif;
+    }
+    .p3-doc-date {
+      font-size: 11px; color: #3a3026; margin-bottom: 40px;
+      font-family: system-ui, sans-serif;
+    }
+    .p3-doc-p {
+      font-size: 16px; line-height: 1.9; color: var(--p3-text);
+      margin-bottom: 24px; font-family: Georgia, serif;
+    }
+    .p3-doc-p em { color: var(--p3-text-hi); font-style: italic; }
+    .p3-doc-h2 {
+      font-size: 18px; font-weight: 400; color: var(--p3-text-hi);
+      margin: 40px 0 16px; font-family: Georgia, serif;
+    }
+    .p3-callout {
+      border-left: 2px solid var(--p3-accent);
+      padding: 12px 20px; margin: 24px 0;
+      background: var(--p3-accent-soft); border-radius: 0 6px 6px 0;
+    }
+    .p3-callout p {
+      font-size: 14px; color: var(--p3-text-hi);
+      font-family: system-ui, sans-serif; line-height: 1.6;
+    }
+    .p3-wc {
+      padding: 10px 40px; border-top: 1px solid var(--p3-border);
+      font-size: 11px; font-family: system-ui, sans-serif;
+      color: #3a3026; text-align: center;
+    }
+
+    .p3-badge {
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--p3-accent); color: #fff;
+      font-size: 11px; font-weight: 600; padding: 6px 12px;
+      border-radius: 20px; letter-spacing: 0.05em;
+    }
+
+    /* Scrollbar mínima */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #2e2e2e; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ─── SELETOR ─── -->
+<nav class="selector">
+  <span class="selector-label">Proposta</span>
+  <button class="tab active" onclick="show(1)">① Ghost / Linear</button>
+  <button class="tab" onclick="show(2)">② Craft / Apple</button>
+  <button class="tab" onclick="show(3)">③ Bear / Obsidian</button>
+</nav>
+
+
+<!-- ══════════════════════════════════════════
+     PROPOSTA 1 — GHOST / LINEAR
+════════════════════════════════════════════ -->
+<section class="proposal active" id="p1">
+  <div class="p1-shell">
+
+    <!-- Sidebar -->
+    <aside class="p1-sidebar">
+      <div class="p1-logo">
+        <div class="p1-logo-icon">🦆</div>
+        <span class="p1-logo-name">Duck Notes</span>
+      </div>
+
+      <div class="p1-nav-section">
+        <div class="p1-nav-item active">
+          <div class="p1-nav-dot"></div> Início
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Rascunhos
+          <span class="p1-nav-count">3</span>
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Favoritos
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Arquivo
+        </div>
+      </div>
+
+      <div class="p1-nav-section">
+        <div class="p1-nav-title">Cadernos</div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> QA
+          <span class="p1-nav-count">2</span>
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Arquitetura
+          <span class="p1-nav-count">6</span>
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Frontend
+          <span class="p1-nav-count">3</span>
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Automação
+          <span class="p1-nav-count">4</span>
+        </div>
+        <div class="p1-nav-item">
+          <div class="p1-nav-dot"></div> Javascript
+          <span class="p1-nav-count">5</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Lista de notas -->
+    <div class="p1-list">
+      <div class="p1-list-header">
+        <span class="p1-list-title">Notas</span>
+        <div class="p1-list-new">+</div>
+      </div>
+      <div class="p1-search">
+        <input type="text" placeholder="Buscar...  ⌘K" />
+      </div>
+      <div class="p1-notes">
+        <div class="p1-note-item active">
+          <div class="p1-note-meta">
+            <span class="p1-note-date">hoje</span>
+            <span class="p1-note-tag">DevOps</span>
+          </div>
+          <div class="p1-note-title">Padrão de Deployment</div>
+          <div class="p1-note-preview">Como definir a melhor estratégia: in-place vs immu...</div>
+        </div>
+        <div class="p1-note-item">
+          <div class="p1-note-meta">
+            <span class="p1-note-date">1d</span>
+            <span class="p1-note-tag">QA</span>
+          </div>
+          <div class="p1-note-title">Rascunho</div>
+          <div class="p1-note-preview">Verificar atualizações de acesso no backend...</div>
+        </div>
+        <div class="p1-note-item">
+          <div class="p1-note-meta">
+            <span class="p1-note-date">3d</span>
+            <span class="p1-note-tag">Linux</span>
+          </div>
+          <div class="p1-note-title">Comandos Linux</div>
+          <div class="p1-note-preview">POSTGRES [18/02/2026] — Configurado para...</div>
+        </div>
+        <div class="p1-note-item">
+          <div class="p1-note-meta">
+            <span class="p1-note-date">3d</span>
+          </div>
+          <div class="p1-note-title">CTFL-ATT</div>
+          <div class="p1-note-preview">Técnicas de engenharia de requisitos...</div>
+        </div>
+        <div class="p1-note-item">
+          <div class="p1-note-meta">
+            <span class="p1-note-date">3d</span>
+            <span class="p1-note-tag">AWS</span>
+          </div>
+          <div class="p1-note-title">AWS Cloud Practitioner</div>
+          <div class="p1-note-preview">No cloud computing podemos dividir em 3...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="p1-editor">
+      <div class="p1-editor-top">
+        <span style="font-size:11px;color:#333;">Arquitetura e Design</span>
+        <span style="font-size:11px;color:#333;margin-left:8px;">›</span>
+        <span style="font-size:11px;color:#555;margin-left:8px;">Padrão de Deployment</span>
+        <div class="p1-editor-action">Exportar</div>
+        <div class="p1-editor-action primary">Salvar</div>
+      </div>
+      <div class="p1-editor-body">
+        <span class="p1-doc-tag">DevOps</span>
+        <div class="p1-doc-h1">Padrão de Deployment</div>
+        <div class="p1-doc-meta">modificado hoje · 342 palavras · 2 min de leitura</div>
+        <div class="p1-doc-p">Como definir a melhor estratégia? In-place vs immutable deployment são abordagens fundamentalmente diferentes que impactam disponibilidade, rollback e custo operacional.</div>
+        <div class="p1-doc-h2">In-place deployment</div>
+        <div class="p1-doc-p">Atualiza instâncias existentes no lugar. Mais simples de implementar, porém com maior risco em caso de falha — exige rollback manual ou automatizado do artefato anterior.<span class="p1-cursor"></span></div>
+        <div class="p1-doc-h2">Immutable deployment</div>
+        <div class="p1-doc-p">Cria novas instâncias para cada deploy. Rollback é trivial — basta redirecionar o tráfego para o conjunto anterior. Aumenta custo transitório mas reduz risco operacional.</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="p1-badge">Ghost / Linear Style</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     PROPOSTA 2 — CRAFT / APPLE
+════════════════════════════════════════════ -->
+<section class="proposal" id="p2">
+  <div class="p2-shell">
+
+    <!-- Sidebar -->
+    <aside class="p2-sidebar">
+      <div class="p2-logo">
+        <div class="p2-logo-icon">🦆</div>
+        <div>
+          <div class="p2-logo-text">Duck Notes</div>
+          <div class="p2-logo-sub">Augusto Santos</div>
+        </div>
+      </div>
+
+      <div class="p2-nav-item active">
+        <div class="p2-nav-icon">🏠</div> Início
+      </div>
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">⭐</div> Favoritos
+        <span class="p2-nav-count">5</span>
+      </div>
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">🔍</div> Buscar
+      </div>
+
+      <div class="p2-divider"></div>
+      <div class="p2-section-title">Cadernos</div>
+
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">📋</div> QA
+        <span class="p2-nav-count">2</span>
+      </div>
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">🏛️</div> Arquitetura
+        <span class="p2-nav-count">6</span>
+      </div>
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">💻</div> Frontend
+        <span class="p2-nav-count">3</span>
+      </div>
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">⚙️</div> Automação
+        <span class="p2-nav-count">4</span>
+      </div>
+      <div class="p2-nav-item">
+        <div class="p2-nav-icon">🟡</div> Javascript
+        <span class="p2-nav-count">5</span>
+      </div>
+
+      <div class="p2-divider"></div>
+      <div class="p2-nav-item" style="margin-top:auto;">
+        <div class="p2-nav-icon">⚙️</div> Configurações
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="p2-main">
+      <div class="p2-top-bar">
+        <div>
+          <div style="font-size:12px;color:#bbb;margin-bottom:2px;">Boa tarde,</div>
+          <div class="p2-greeting">Augusto <span>Santos</span> 👋</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <div class="p2-search-box">
+            <span>🔍</span>
+            <input type="text" placeholder="Buscar notas..." />
+          </div>
+          <div class="p2-new-btn">+ Nova nota</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="p2-section-h">Resumo</div>
+      <div class="p2-stats-row">
+        <div class="p2-stat">
+          <div class="p2-stat-icon">📔</div>
+          <div class="p2-stat-num">10</div>
+          <div class="p2-stat-label">Cadernos</div>
+        </div>
+        <div class="p2-stat">
+          <div class="p2-stat-icon">📄</div>
+          <div class="p2-stat-num">34</div>
+          <div class="p2-stat-label">Notas</div>
+        </div>
+        <div class="p2-stat">
+          <div class="p2-stat-icon">🏷️</div>
+          <div class="p2-stat-num">6</div>
+          <div class="p2-stat-label">Tags</div>
+        </div>
+        <div class="p2-stat">
+          <div class="p2-stat-icon">✏️</div>
+          <div class="p2-stat-num">8</div>
+          <div class="p2-stat-label">Esta semana</div>
+        </div>
+      </div>
+
+      <!-- Recentes -->
+      <div class="p2-section-h" style="margin-top:8px;">Acessadas Recentemente</div>
+      <div class="p2-cards-grid">
+        <div class="p2-card">
+          <div class="p2-card-nb">🏛️ Arquitetura</div>
+          <div class="p2-card-title">Padrão de Deployment</div>
+          <div class="p2-card-preview">In-place vs Immutable: qual estratégia usar para cada cenário de produção?</div>
+          <div class="p2-card-footer">
+            <span class="p2-card-date">hoje</span>
+            <span class="p2-card-tag">DevOps</span>
+          </div>
+        </div>
+        <div class="p2-card">
+          <div class="p2-card-nb">📋 QA</div>
+          <div class="p2-card-title">Rascunho</div>
+          <div class="p2-card-preview">Verificar atualizações de acesso no backend, validar acessos marcados...</div>
+          <div class="p2-card-footer">
+            <span class="p2-card-date">1d atrás</span>
+          </div>
+        </div>
+        <div class="p2-card">
+          <div class="p2-card-nb">👤 Pessoal</div>
+          <div class="p2-card-title">Comandos Linux</div>
+          <div class="p2-card-preview">POSTGRES [18/02/2026] — Configurado para aceitar senha via TCP/IP...</div>
+          <div class="p2-card-footer">
+            <span class="p2-card-date">3d atrás</span>
+            <span class="p2-card-tag">Linux</span>
+          </div>
+        </div>
+        <div class="p2-card">
+          <div class="p2-card-nb">🏅 Certificações</div>
+          <div class="p2-card-title">GH-900 Github Foundation</div>
+          <div class="p2-card-preview">Github Flow — Components, Branches, como criar features com segurança...</div>
+          <div class="p2-card-footer">
+            <span class="p2-card-date">3d atrás</span>
+            <span class="p2-card-tag">Quality Assurance</span>
+          </div>
+        </div>
+        <div class="p2-card">
+          <div class="p2-card-nb">🏅 Certificações</div>
+          <div class="p2-card-title">AWS Cloud Practitioner</div>
+          <div class="p2-card-preview">No cloud computing podemos dividir em 3 serviços principais: IaaS, PaaS...</div>
+          <div class="p2-card-footer">
+            <span class="p2-card-date">3d atrás</span>
+            <span class="p2-card-tag">Quality Assurance</span>
+          </div>
+        </div>
+        <div class="p2-card">
+          <div class="p2-card-nb">🏅 Certificações</div>
+          <div class="p2-card-title">CTFL-ATT</div>
+          <div class="p2-card-preview">Técnicas de Engenharia de Requisitos para equipes ágeis aprimorarem...</div>
+          <div class="p2-card-footer">
+            <span class="p2-card-date">3d atrás</span>
+            <span class="p2-card-tag">Quality Assurance</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="p2-badge">Craft / Apple Style</div>
+</section>
+
+
+<!-- ══════════════════════════════════════════
+     PROPOSTA 3 — BEAR / OBSIDIAN
+════════════════════════════════════════════ -->
+<section class="proposal" id="p3">
+  <div class="p3-shell">
+
+    <!-- Sidebar -->
+    <aside class="p3-sidebar">
+      <div class="p3-logo">
+        <span class="p3-logo-bear">🐻</span>
+        <span class="p3-logo-name">Duck Notes</span>
+      </div>
+      <div class="p3-nav">
+        <div class="p3-nav-item active">
+          <span class="p3-nav-icon">◉</span> Todas as notas
+          <span class="p3-nav-count">34</span>
+        </div>
+        <div class="p3-nav-item">
+          <span class="p3-nav-icon">○</span> Não arquivadas
+        </div>
+        <div class="p3-nav-item">
+          <span class="p3-nav-icon">◇</span> Sem tag
+        </div>
+        <div class="p3-nav-item">
+          <span class="p3-nav-icon">☆</span> Favoritos
+        </div>
+        <div class="p3-nav-item">
+          <span class="p3-nav-icon">🗑</span> Lixeira
+        </div>
+      </div>
+
+      <div class="p3-tags-title">Tags</div>
+      <div class="p3-tag-pill"><div class="p3-tag-dot" style="background:#d97706"></div> Automação <span style="margin-left:auto;font-size:10px;color:#3a3026;">3</span></div>
+      <div class="p3-tag-pill"><div class="p3-tag-dot" style="background:#3b82f6"></div> Banco de Dados <span style="margin-left:auto;font-size:10px;color:#3a3026;">1</span></div>
+      <div class="p3-tag-pill"><div class="p3-tag-dot" style="background:#10b981"></div> DevOps <span style="margin-left:auto;font-size:10px;color:#3a3026;">6</span></div>
+      <div class="p3-tag-pill"><div class="p3-tag-dot" style="background:#8b5cf6"></div> Pessoal - Linux <span style="margin-left:auto;font-size:10px;color:#3a3026;">1</span></div>
+      <div class="p3-tag-pill"><div class="p3-tag-dot" style="background:#ef4444"></div> Quality Assurance <span style="margin-left:auto;font-size:10px;color:#3a3026;">7</span></div>
+      <div class="p3-tag-pill"><div class="p3-tag-dot" style="background:#f59e0b"></div> Ruby <span style="margin-left:auto;font-size:10px;color:#3a3026;">3</span></div>
+
+      <div style="margin-top:auto;padding:12px 16px;border-top:1px solid var(--p3-border);">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--p3-accent);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;">A</div>
+          <div style="font-size:11px;font-family:system-ui,sans-serif;">
+            <div style="color:var(--p3-text-hi);">Augusto Santos</div>
+            <div style="color:#3a3026;">augustoarandiba@gmail.com</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Lista -->
+    <div class="p3-list">
+      <div class="p3-list-header">
+        <span class="p3-list-title">Todas as notas</span>
+        <span style="font-size:18px;color:var(--p3-accent);cursor:pointer;line-height:1;">✎</span>
+      </div>
+      <div class="p3-list-search">
+        <input type="text" placeholder="Buscar..." />
+      </div>
+      <div class="p3-notes">
+        <div class="p3-note-item active">
+          <div class="p3-note-title">Padrão de Deployment</div>
+          <div class="p3-note-preview">In-place vs Immutable deployment são abordagens...</div>
+          <div class="p3-note-date">hoje · DevOps</div>
+        </div>
+        <div class="p3-note-item">
+          <div class="p3-note-title">Rascunho</div>
+          <div class="p3-note-preview">Verificar atualizações de acesso no backend...</div>
+          <div class="p3-note-date">1d atrás</div>
+        </div>
+        <div class="p3-note-item">
+          <div class="p3-note-title">Comandos Linux</div>
+          <div class="p3-note-preview">POSTGRES [18/02/2026] — Configurado para aceitar...</div>
+          <div class="p3-note-date">3d atrás · Pessoal - Linux</div>
+        </div>
+        <div class="p3-note-item">
+          <div class="p3-note-title">CTFL-ATT</div>
+          <div class="p3-note-preview">Técnicas de Engenharia de Requisitos para equipes...</div>
+          <div class="p3-note-date">3d atrás · Quality Assurance</div>
+        </div>
+        <div class="p3-note-item">
+          <div class="p3-note-title">GH-900 Github Foundation</div>
+          <div class="p3-note-preview">Github Flow — Components e Branches...</div>
+          <div class="p3-note-date">3d atrás · Quality Assurance</div>
+        </div>
+        <div class="p3-note-item">
+          <div class="p3-note-title">AWS Cloud Practitioner</div>
+          <div class="p3-note-preview">IaaS, PaaS, SaaS — infraestrutura como serviço...</div>
+          <div class="p3-note-date">3d atrás · Quality Assurance</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="p3-editor">
+      <div class="p3-editor-bar">
+        <button class="p3-fmt-btn"><b>B</b></button>
+        <button class="p3-fmt-btn"><i>I</i></button>
+        <button class="p3-fmt-btn"><u>U</u></button>
+        <div class="p3-fmt-sep"></div>
+        <button class="p3-fmt-btn">H1</button>
+        <button class="p3-fmt-btn">H2</button>
+        <button class="p3-fmt-btn">—</button>
+        <div class="p3-fmt-sep"></div>
+        <button class="p3-fmt-btn">🔗</button>
+        <button class="p3-fmt-btn">📷</button>
+        <button class="p3-focus-toggle">✦ Foco</button>
+      </div>
+      <div class="p3-editor-body">
+        <div class="p3-doc">
+          <div class="p3-doc-h1">Padrão de Deployment</div>
+          <div class="p3-doc-date">18 de abril de 2026 · DevOps</div>
+          <div class="p3-doc-p">Como definir a melhor estratégia? <em>In-place</em> vs <em>immutable deployment</em> são abordagens fundamentalmente diferentes — cada uma impacta disponibilidade, custo e a capacidade de rollback de formas distintas.</div>
+          <div class="p3-doc-h2">In-place deployment</div>
+          <div class="p3-doc-p">Atualiza as instâncias existentes no lugar. É mais simples de implementar, porém carrega maior risco em caso de falha, exigindo rollback manual ou automatizado do artefato anterior.</div>
+          <div class="p3-callout">
+            <p>⚡ Atenção: ambientes com alta frequência de deploy tendem a acumular estado inconsistente com in-place. Prefira immutable quando a reprodutibilidade for crítica.</p>
+          </div>
+          <div class="p3-doc-h2">Immutable deployment</div>
+          <div class="p3-doc-p">Cria novas instâncias para cada deploy. Rollback é <em>trivial</em> — basta redirecionar o tráfego. Aumenta custo transitório mas reduz o risco operacional de forma significativa.</div>
+        </div>
+      </div>
+      <div class="p3-wc">342 palavras · 2 min de leitura</div>
+    </div>
+
+  </div>
+  <div class="p3-badge">Bear / Obsidian Style</div>
+</section>
+
+<script>
+  function show(n) {
+    document.querySelectorAll('.proposal').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('p' + n).classList.add('active');
+    document.querySelectorAll('.tab')[n - 1].classList.add('active');
+  }
+</script>
+</body>
+</html>
