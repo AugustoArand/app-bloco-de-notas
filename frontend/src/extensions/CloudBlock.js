@@ -12,32 +12,19 @@ const CloudBlock = Node.create({
 
   parseHTML() {
     return [
-      // novo formato
-      { tag: 'div.cloud-wrap', contentElement: '.cloud-body' },
-      // retrocompatibilidade com notas antigas
       { tag: 'div[data-type="cloud-block"]' },
+      { tag: 'div.cloud-wrap', contentElement: '.cloud-body' },
     ]
   },
 
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
-      { class: 'cloud-wrap' },
-      // Bumps decorativos — não editáveis
-      [
-        'div',
-        { class: 'cloud-bumps', 'aria-hidden': 'true', contenteditable: 'false' },
-        ['div', { class: 'cloud-bump cb-sm-l' }],
-        ['div', { class: 'cloud-bump cb-lg' }],
-        ['div', { class: 'cloud-bump cb-md' }],
-        ['div', { class: 'cloud-bump cb-sm-r' }],
-      ],
-      // Corpo editável
-      [
-        'div',
-        mergeAttributes(HTMLAttributes, { 'data-type': 'cloud-block', class: 'cloud-body' }),
-        0,
-      ],
+      mergeAttributes(HTMLAttributes, {
+        'data-type': 'cloud-block',
+        class: 'cloud-block',
+      }),
+      0,
     ]
   },
 
@@ -59,7 +46,6 @@ const CloudBlock = Node.create({
           decorations(state) {
             const decorations = []
             const { from, to } = state.selection
-
             state.doc.descendants((node, pos) => {
               if (node.type.name === 'cloudBlock') {
                 const nodeEnd = pos + node.nodeSize
@@ -70,7 +56,6 @@ const CloudBlock = Node.create({
                 }
               }
             })
-
             return DecorationSet.create(state.doc, decorations)
           },
         },
