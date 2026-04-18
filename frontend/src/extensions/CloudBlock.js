@@ -11,17 +11,33 @@ const CloudBlock = Node.create({
   defining: true,
 
   parseHTML() {
-    return [{ tag: 'div[data-type="cloud-block"]' }]
+    return [
+      // novo formato
+      { tag: 'div.cloud-wrap', contentElement: '.cloud-body' },
+      // retrocompatibilidade com notas antigas
+      { tag: 'div[data-type="cloud-block"]' },
+    ]
   },
 
   renderHTML({ HTMLAttributes }) {
     return [
       'div',
-      mergeAttributes(HTMLAttributes, {
-        'data-type': 'cloud-block',
-        class: 'cloud-block',
-      }),
-      0,
+      { class: 'cloud-wrap' },
+      // Bumps decorativos — não editáveis
+      [
+        'div',
+        { class: 'cloud-bumps', 'aria-hidden': 'true', contenteditable: 'false' },
+        ['div', { class: 'cloud-bump cb-sm-l' }],
+        ['div', { class: 'cloud-bump cb-lg' }],
+        ['div', { class: 'cloud-bump cb-md' }],
+        ['div', { class: 'cloud-bump cb-sm-r' }],
+      ],
+      // Corpo editável
+      [
+        'div',
+        mergeAttributes(HTMLAttributes, { 'data-type': 'cloud-block', class: 'cloud-body' }),
+        0,
+      ],
     ]
   },
 
@@ -35,7 +51,6 @@ const CloudBlock = Node.create({
     }
   },
 
-  // Adds .cloud-active class to the node whenever the cursor is inside it
   addProseMirrorPlugins() {
     return [
       new Plugin({
