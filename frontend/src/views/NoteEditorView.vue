@@ -200,11 +200,54 @@
 
         <!-- Tiptap editor -->
         <editor-content v-if="editorMode === 'text'" :editor="editor" class="tiptap-content" />
-        <MindMapBoard
-          v-else
-          v-model="diagramData"
-          @update:model-value="handleDiagramUpdate"
-        />
+
+        <!-- Quadros -->
+        <div v-else class="boards-container">
+          <div class="boards-tabs">
+            <div
+              v-for="board in boards"
+              :key="board.id"
+              class="board-tab"
+              :class="{ active: activeBoardId === board.id }"
+              @click="selectBoard(board.id)"
+            >
+              <span
+                v-if="editingBoardId !== board.id"
+                class="board-tab-name"
+                @dblclick.stop="startEditBoardTitle(board)"
+                :title="'Duplo clique para renomear'"
+              >{{ board.title }}</span>
+              <input
+                v-else
+                v-model="editingBoardTitle"
+                class="board-tab-input"
+                ref="boardTitleInput"
+                @blur="saveBoardTitle(board.id)"
+                @keyup.enter="saveBoardTitle(board.id)"
+                @click.stop
+              />
+              <button
+                v-if="boards.length > 1"
+                class="board-tab-close"
+                @click.stop="removeBoard(board.id)"
+                title="Remover quadro"
+              >×</button>
+            </div>
+            <button class="board-tab-add" @click="addBoard" title="Novo quadro">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Quadro
+            </button>
+          </div>
+
+          <MindMapBoard
+            v-if="activeBoard"
+            :key="activeBoardId"
+            :model-value="{ nodes: activeBoard.nodes, edges: activeBoard.edges }"
+            @update:model-value="handleBoardUpdate"
+          />
+        </div>
       </div>
 
       <!-- Table of Contents -->
@@ -234,7 +277,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import DOMPurify from 'dompurify'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
@@ -268,7 +311,13 @@ const noteTitle = ref('')
 const lastSaved = ref(false)
 const showTagPicker = ref(false)
 const editorMode = ref('text')
-const diagramData = ref({ nodes: [], edges: [] })
+const boards = ref([{ id: 'board-1', title: 'Quadro 1', nodes: [], edges: [] }])
+const activeBoardId = ref('board-1')
+const editingBoardId = ref(null)
+const editingBoardTitle = ref('')
+const boardTitleInput = ref(null)
+
+const activeBoard = computed(() => boards.value.find(b => b.id === activeBoardId.value))
 const aiLoading = ref(false)
 const aiPanelOpen = ref(false)
 const aiMode = ref('')
@@ -397,7 +446,17 @@ async function loadNote(id) {
   const data = await notesStore.fetchOne(id)
   note.value = data
   noteTitle.value = data.title || ''
-  diagramData.value = data.diagram_data || { nodes: [], edges: [] }
+  const raw = data.diagram_data
+  if (Array.isArray(raw) && raw.length > 0) {
+    boards.value = raw
+    activeBoardId.value = raw[0].id
+  } else if (raw?.nodes) {
+    boards.value = [{ id: 'board-1', title: 'Quadro 1', nodes: raw.nodes, edges: raw.edges || [] }]
+    activeBoardId.value = 'board-1'
+  } else {
+    boards.value = [{ id: 'board-1', title: 'Quadro 1', nodes: [], edges: [] }]
+    activeBoardId.value = 'board-1'
+  }
   editorMode.value = 'text'
   if (editor.value) {
     editor.value.commands.setContent(sanitizeEditorContent(data.content || ''))
@@ -415,15 +474,56 @@ function debounceSave() {
     await notesStore.save(note.value.id, {
       title: noteTitle.value,
       content: safeContent,
-      diagram_data: diagramData.value
+      diagram_data: boards.value
     })
     lastSaved.value = true
     setTimeout(() => { lastSaved.value = false }, 3000)
   }, 1200)
 }
 
-function handleDiagramUpdate(value) {
-  diagramData.value = value
+function handleBoardUpdate(value) {
+  const board = boards.value.find(b => b.id === activeBoardId.value)
+  if (board) {
+    board.nodes = value.nodes
+    board.edges = value.edges
+  }
+  debounceDiagramSave()
+}
+
+function addBoard() {
+  const id = `board-${Date.now()}`
+  boards.value.push({ id, title: `Quadro ${boards.value.length + 1}`, nodes: [], edges: [] })
+  activeBoardId.value = id
+  debounceDiagramSave()
+}
+
+function removeBoard(id) {
+  if (boards.value.length <= 1) return
+  if (!confirm('Excluir este quadro e todos os seus nós?')) return
+  const idx = boards.value.findIndex(b => b.id === id)
+  boards.value = boards.value.filter(b => b.id !== id)
+  if (activeBoardId.value === id) {
+    activeBoardId.value = boards.value[Math.max(0, idx - 1)].id
+  }
+  debounceDiagramSave()
+}
+
+function selectBoard(id) {
+  activeBoardId.value = id
+}
+
+function startEditBoardTitle(board) {
+  editingBoardId.value = board.id
+  editingBoardTitle.value = board.title
+  nextTick(() => boardTitleInput.value?.[0]?.focus())
+}
+
+function saveBoardTitle(id) {
+  const board = boards.value.find(b => b.id === id)
+  if (board && editingBoardTitle.value.trim()) {
+    board.title = editingBoardTitle.value.trim()
+  }
+  editingBoardId.value = null
   debounceDiagramSave()
 }
 
@@ -435,7 +535,7 @@ function debounceDiagramSave() {
     await notesStore.save(note.value.id, {
       title: noteTitle.value,
       content: safeContent,
-      diagram_data: diagramData.value
+      diagram_data: boards.value
     })
     lastSaved.value = true
     setTimeout(() => { lastSaved.value = false }, 3000)
@@ -678,6 +778,102 @@ onBeforeUnmount(() => {
   margin: 0 auto;
   width: 100%;
 }
+
+/* ── Múltiplos quadros ── */
+.boards-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+
+.boards-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 12px 0;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--panel);
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.boards-tabs::-webkit-scrollbar { display: none; }
+
+.board-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px 6px 0 0;
+  border: 1px solid transparent;
+  border-bottom: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  position: relative;
+  bottom: -1px;
+  user-select: none;
+}
+.board-tab:hover { color: var(--text-2); background: var(--surface); }
+.board-tab.active {
+  color: var(--purple-2);
+  background: var(--surface);
+  border-color: var(--border-soft);
+  border-bottom-color: var(--surface);
+}
+
+.board-tab-name { cursor: pointer; }
+
+.board-tab-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+  font-family: inherit;
+  width: 90px;
+  padding: 0;
+}
+
+.board-tab-close {
+  background: none;
+  border: none;
+  color: var(--text-3);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 3px;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+}
+.board-tab-close:hover { color: var(--red); background: rgba(244,63,94,0.12); }
+
+.board-tab-add {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 6px 6px 0 0;
+  border: 1px dashed var(--border);
+  border-bottom: none;
+  background: transparent;
+  color: var(--text-3);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  position: relative;
+  bottom: -1px;
+}
+.board-tab-add:hover { color: var(--purple-2); border-color: var(--purple-1); }
 
 .title-area {
   margin-bottom: 24px;
@@ -1159,57 +1355,71 @@ onBeforeUnmount(() => {
   font-style: italic;
 }
 
-/* Cloud Block */
+/* Cloud Block — forma real de nuvem via pseudo-elementos + drop-shadow unificado */
 .tiptap-content :deep(.cloud-block) {
   position: relative;
-  margin: 20px 0;
-  padding: 18px 28px;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.07), rgba(139, 92, 246, 0.11));
-  border: 2px solid rgba(124, 58, 237, 0.32);
-  border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px;
-  color: #c4b5fd;
-  font-weight: 700;
-  line-height: 1.75;
-  animation: cloudMorph 9s ease-in-out infinite;
-  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  margin: 60px 8px 32px;
+  padding: 22px 40px 26px;
+  background: rgba(217, 119, 6, 0.10);
+  border-radius: 50px;
+  color: #fcd34d;
+  font-weight: 600;
+  line-height: 1.8;
+  filter:
+    drop-shadow(0 0 1px rgba(217, 119, 6, 0.7))
+    drop-shadow(0 0 1px rgba(217, 119, 6, 0.5))
+    drop-shadow(0 6px 20px rgba(0, 0, 0, 0.35));
+  animation: cloudFloat 6s ease-in-out infinite;
+  transition: filter 0.4s ease;
+}
+
+/* Protuberância grande (centro) */
+.tiptap-content :deep(.cloud-block::before) {
+  content: '';
+  position: absolute;
+  background: rgba(217, 119, 6, 0.10);
+  border-radius: 50%;
+  width: 52%;
+  height: 80px;
+  top: -50px;
+  left: 22%;
+}
+
+/* Protuberância pequena (esquerda) */
+.tiptap-content :deep(.cloud-block::after) {
+  content: '';
+  position: absolute;
+  background: rgba(217, 119, 6, 0.10);
+  border-radius: 50%;
+  width: 30%;
+  height: 54px;
+  top: -32px;
+  left: 6%;
 }
 
 .tiptap-content :deep(.cloud-block > *) {
-  color: #c4b5fd;
-  font-weight: 700;
+  color: #fcd34d;
+  font-weight: 600;
+  position: relative;
+  z-index: 1;
 }
 
 .tiptap-content :deep(.cloud-active) {
-  border-color: rgba(139, 92, 246, 0.65) !important;
-  box-shadow:
-    0 0 0 3px rgba(124, 58, 237, 0.14),
-    0 8px 36px rgba(124, 58, 237, 0.22) !important;
-  animation: cloudMorphActive 5s ease-in-out infinite !important;
+  filter:
+    drop-shadow(0 0 1.5px rgba(217, 119, 6, 1))
+    drop-shadow(0 0 1px rgba(217, 119, 6, 0.7))
+    drop-shadow(0 8px 28px rgba(217, 119, 6, 0.3)) !important;
+  animation: cloudFloatActive 3s ease-in-out infinite !important;
 }
 
-@keyframes cloudMorph {
-  0%   { border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px; }
-  25%  { border-radius: 60px 40px 70px 50px / 50px 70px 40px 60px; }
-  50%  { border-radius: 50px 70px 40px 60px / 70px 50px 60px 40px; }
-  75%  { border-radius: 70px 50px 60px 40px / 40px 60px 50px 70px; }
-  100% { border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px; }
+@keyframes cloudFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-5px); }
 }
 
-@keyframes cloudMorphActive {
-  0%, 100% {
-    border-radius: 40px 60px 50px 70px / 60px 40px 70px 50px;
-    transform: translateY(0px);
-    box-shadow:
-      0 0 0 3px rgba(124, 58, 237, 0.14),
-      0 8px 36px rgba(124, 58, 237, 0.22);
-  }
-  50% {
-    border-radius: 60px 40px 70px 50px / 50px 70px 40px 60px;
-    transform: translateY(-5px);
-    box-shadow:
-      0 0 0 4px rgba(124, 58, 237, 0.2),
-      0 16px 48px rgba(124, 58, 237, 0.32);
-  }
+@keyframes cloudFloatActive {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-7px); }
 }
 
 /* Highlight */

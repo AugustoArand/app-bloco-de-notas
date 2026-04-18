@@ -38,9 +38,6 @@
           </svg>
         </button>
         <div class="notes-header-breadcrumb">
-          <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-          </svg>
           <span class="notes-header-name">{{ activeNotebookName }}</span>
         </div>
         <button id="btn-new-note" class="btn-icon" title="Nova nota" @click="createNote">
@@ -236,10 +233,6 @@
               :class="{ active: $route.params.id == note.id }"
             >
               <div class="note-item-left">
-                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                  <polyline points="14,2 14,8 20,8"/>
-                </svg>
                 <div class="note-item-info">
                   <span class="note-title">{{ note.title || 'Sem título' }}</span>
                   <span class="note-date">{{ formatDate(note.updated_at) }}</span>
@@ -669,27 +662,27 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .note-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0 6px 6px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .note-item {
   display: flex;
   align-items: center;
   padding: 9px 10px;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   cursor: pointer;
   transition: background var(--transition);
   text-decoration: none;
   color: inherit;
-  border: 1px solid transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-soft);
 }
 .note-item:hover { background: var(--panel-hover); }
 .note-item.active {
   background: var(--purple-dim);
-  border-color: rgba(217,119,6,0.2);
+  border-bottom-color: rgba(217,119,6,0.2);
 }
 
 .note-item-left {
