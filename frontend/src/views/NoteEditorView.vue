@@ -1355,79 +1355,63 @@ onBeforeUnmount(() => {
   font-style: italic;
 }
 
-/* ── Cloud Block ── */
-.tiptap-content :deep(.cloud-wrap) {
+/* ── Bloco de Destaque ── */
+.tiptap-content :deep(.cloud-block) {
   position: relative;
-  margin: 20px 8px 32px;
-  animation: cloudFloat 6s ease-in-out infinite;
-}
-
-/* Container dos bumps — posicionado acima do corpo */
-.tiptap-content :deep(.cloud-bumps) {
-  position: absolute;
-  bottom: calc(100% - 1.5px);
-  left: 32px;
-  right: 32px;
-  height: 60px;
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  pointer-events: none;
-}
-
-/* Bump base */
-.tiptap-content :deep(.cloud-bump) {
-  background: rgba(217, 119, 6, 0.12);
-  border: 1.5px solid rgba(217, 119, 6, 0.45);
-  border-bottom: none;
-  border-radius: 50% 50% 0 0;
-  flex-shrink: 0;
-}
-
-/* Tamanhos proporcionais dos bumps — simula silhueta real de nuvem */
-.tiptap-content :deep(.cb-sm-l) { flex: 1.2; height: 34px; }
-.tiptap-content :deep(.cb-lg)   { flex: 2.2; height: 58px; }
-.tiptap-content :deep(.cb-md)   { flex: 1.7; height: 44px; }
-.tiptap-content :deep(.cb-sm-r) { flex: 1;   height: 28px; }
-
-/* Corpo da nuvem — área editável */
-.tiptap-content :deep(.cloud-body) {
-  background: rgba(217, 119, 6, 0.12);
-  border: 1.5px solid rgba(217, 119, 6, 0.45);
-  border-radius: 50px;
-  padding: 22px 40px 26px;
-  color: #fcd34d;
-  font-weight: 600;
+  margin: 20px 0;
+  padding: 16px 20px 16px 52px;
+  border-radius: 10px;
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  background: linear-gradient(
+    120deg,
+    rgba(217, 119, 6, 0.09) 0%,
+    rgba(251, 191, 36, 0.05) 50%,
+    rgba(217, 119, 6, 0.09) 100%
+  );
+  background-size: 200% 100%;
+  color: #e8dfd4;
   line-height: 1.8;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  animation: highlightSweep 5s ease-in-out infinite;
+  transition: border-color 0.3s ease;
 }
 
-.tiptap-content :deep(.cloud-body > *) {
-  color: #fcd34d;
-  font-weight: 600;
+/* Ícone de destaque à esquerda */
+.tiptap-content :deep(.cloud-block::before) {
+  content: '✦';
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #f59e0b;
+  animation: iconPulse 2.5s ease-in-out infinite;
+  line-height: 1;
 }
 
-/* Estado ativo (cursor dentro da nuvem) */
-.tiptap-content :deep(.cloud-active .cloud-body) {
-  border-color: rgba(217, 119, 6, 0.8);
-  box-shadow:
-    0 0 0 3px rgba(217, 119, 6, 0.14),
-    0 8px 32px rgba(217, 119, 6, 0.2);
+.tiptap-content :deep(.cloud-block > *) {
+  color: #e8dfd4;
+  margin: 0;
 }
-.tiptap-content :deep(.cloud-active .cloud-bump) {
-  border-color: rgba(217, 119, 6, 0.8);
-}
+
+/* Cursor dentro do bloco */
 .tiptap-content :deep(.cloud-active) {
-  animation: cloudFloatActive 3s ease-in-out infinite !important;
+  border-color: rgba(217, 119, 6, 0.6) !important;
+  box-shadow:
+    0 0 0 3px rgba(217, 119, 6, 0.08),
+    0 4px 24px rgba(217, 119, 6, 0.12);
 }
 
-@keyframes cloudFloat {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-5px); }
+/* Animação de sweep do gradiente */
+@keyframes highlightSweep {
+  0%        { background-position: 100% 0; border-color: rgba(217, 119, 6, 0.2); }
+  50%       { background-position:   0% 0; border-color: rgba(251, 191, 36, 0.45); }
+  100%      { background-position: 100% 0; border-color: rgba(217, 119, 6, 0.2); }
 }
-@keyframes cloudFloatActive {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-7px); }
+
+/* Pulsação do ícone */
+@keyframes iconPulse {
+  0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(1);    }
+  50%       { opacity: 1;   transform: translateY(-50%) scale(1.25); }
 }
 
 /* Highlight */
