@@ -8,6 +8,7 @@
         </transition>
       </router-view>
     </main>
+    <KanbanSidebar />
     <QuickNotesSidebar />
   </div>
 </template>
@@ -16,6 +17,7 @@
 import { onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppSidebar from '@/components/AppSidebar.vue'
+import KanbanSidebar from '@/components/KanbanSidebar.vue'
 import QuickNotesSidebar from '@/components/QuickNotesSidebar.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useNotebooksStore } from '@/stores/notebooks'

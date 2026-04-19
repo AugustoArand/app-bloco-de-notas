@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_10_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_18_110100) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -37,6 +37,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_120000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "kanban_boards", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "position", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "position"], name: "index_kanban_boards_on_user_id_and_position"
+    t.index ["user_id"], name: "index_kanban_boards_on_user_id"
+  end
+
+  create_table "kanban_tasks", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description", default: ""
+    t.integer "kanban_board_id", null: false
+    t.integer "position", default: 0, null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kanban_board_id", "position"], name: "index_kanban_tasks_on_kanban_board_id_and_position"
+    t.index ["kanban_board_id"], name: "index_kanban_tasks_on_kanban_board_id"
   end
 
   create_table "note_tags", id: false, force: :cascade do |t|
@@ -106,6 +127,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_10_120000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "kanban_boards", "users"
+  add_foreign_key "kanban_tasks", "kanban_boards"
   add_foreign_key "note_tags", "notes"
   add_foreign_key "note_tags", "tags"
   add_foreign_key "notebooks", "users"
