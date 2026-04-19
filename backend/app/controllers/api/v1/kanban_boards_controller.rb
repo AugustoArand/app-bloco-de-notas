@@ -76,7 +76,7 @@ module Api
           id: board.id,
           title: board.title,
           position: board.position,
-          cards: board.kanban_tasks.order(position: :asc).map { |task| task_json(task) },
+          cards: board.kanban_tasks.active.order(position: :asc).map { |task| task_json(task) },
           created_at: board.created_at,
           updated_at: board.updated_at
         }

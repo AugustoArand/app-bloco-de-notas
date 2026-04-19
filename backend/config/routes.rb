@@ -27,6 +27,9 @@ Rails.application.routes.draw do
         resources :kanban_tasks, only: [:create], shallow: true
       end
       resources :kanban_tasks, only: [:update, :destroy]
+      get "kanban_tasks/archived", to: "kanban_tasks#archived"
+      patch "kanban_tasks/:id/archive", to: "kanban_tasks#archive"
+      patch "kanban_tasks/:id/restore", to: "kanban_tasks#restore"
 
       # Recent and global search (must come BEFORE the shallow notes resources)
       get "notes/recent", to: "notes#recent"

@@ -6,7 +6,8 @@ export const useKanbanStore = defineStore('kanban', {
         isOpen: false,
         initialized: false,
         loading: false,
-        boards: []
+        boards: [],
+        archivedTasks: []
     }),
 
     getters: {
@@ -29,6 +30,12 @@ export const useKanbanStore = defineStore('kanban', {
             } finally {
                 this.loading = false
             }
+        },
+
+        async fetchArchivedTasks() {
+            const { data } = await api.get('/api/v1/kanban_tasks/archived')
+            this.archivedTasks = Array.isArray(data) ? data : []
+            return this.archivedTasks
         },
 
         async toggle() {
@@ -130,6 +137,19 @@ export const useKanbanStore = defineStore('kanban', {
 
             const nextBoard = this.boards[boardIndex + 1]
             return this.moveTask(taskId, currentBoardId, nextBoard.id, 9999)
+        },
+
+        async archiveTask(taskId) {
+            await api.patch(`/api/v1/kanban_tasks/${taskId}/archive`)
+            await Promise.all([this.fetchBoards(), this.fetchArchivedTasks()])
+            return true
+        },
+
+        async restoreTask(taskId, boardId = null) {
+            const payload = boardId ? { kanban_task: { kanban_board_id: boardId } } : {}
+            await api.patch(`/api/v1/kanban_tasks/${taskId}/restore`, payload)
+            await Promise.all([this.fetchBoards(), this.fetchArchivedTasks()])
+            return true
         }
     }
 })
