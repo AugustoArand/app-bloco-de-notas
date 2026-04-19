@@ -110,6 +110,7 @@
           contenteditable="true"
           :data-placeholder="'Escreva sua anotação rápida...'"
           @input="onEditorInput"
+          @change="onEditorChange"
         ></div>
 
         <!-- Barra de formatação -->
@@ -194,6 +195,7 @@ function openModal(note) {
   nextTick(() => {
     if (editorRef.value) {
       editorRef.value.innerHTML = note.text || ''
+      syncChecklistVisualState(editorRef.value)
       editorRef.value.focus()
     }
   })
@@ -208,6 +210,40 @@ function onEditorInput() {
   if (!activeNote.value) return
   activeNote.value.text = editorRef.value?.innerHTML || ''
   saveActive()
+}
+
+function onEditorChange(event) {
+  const target = event?.target
+  if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return
+  const item = target.closest('.qn-check-item')
+  if (!item) return
+
+  if (target.checked) {
+    target.setAttribute('checked', 'checked')
+    item.classList.add('checked')
+  } else {
+    target.removeAttribute('checked')
+    item.classList.remove('checked')
+  }
+
+  onEditorInput()
+}
+
+function syncChecklistVisualState(root) {
+  if (!root) return
+  const checks = root.querySelectorAll('.qn-check-item input[type="checkbox"]')
+  checks.forEach((input) => {
+    const item = input.closest('.qn-check-item')
+    const isChecked = input.hasAttribute('checked') || input.checked
+    input.checked = isChecked
+    if (isChecked) {
+      input.setAttribute('checked', 'checked')
+      item?.classList.add('checked')
+    } else {
+      input.removeAttribute('checked')
+      item?.classList.remove('checked')
+    }
+  })
 }
 
 function saveActive() {
@@ -292,11 +328,12 @@ function insertChecklist() {
   if (!sel?.rangeCount) return
   const range = sel.getRangeAt(0)
   const div = document.createElement('div')
-  div.style.cssText = 'display:flex;align-items:center;gap:6px;margin:2px 0'
+  div.className = 'qn-check-item'
   const cb = document.createElement('input')
   cb.type = 'checkbox'
-  cb.style.cssText = 'accent-color:#7c3aed;width:14px;height:14px;flex-shrink:0'
+  cb.className = 'qn-check-input'
   const span = document.createElement('span')
+  span.className = 'qn-check-text'
   span.appendChild(document.createTextNode('\u200B'))
   div.appendChild(cb)
   div.appendChild(span)
@@ -642,6 +679,38 @@ function formatDate(dateStr) {
 .qn-modal-editor ul,
 .qn-modal-editor ol { padding-left: 20px; margin: 4px 0; }
 .qn-modal-editor li { margin: 2px 0; }
+
+.qn-modal-editor .qn-check-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.qn-modal-editor .qn-check-input {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: var(--purple-2);
+}
+
+.qn-modal-editor .qn-check-text {
+  flex: 1;
+  min-height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.qn-modal-editor .qn-check-item.checked .qn-check-text {
+  border-color: var(--border-soft);
+  background: var(--surface);
+  color: var(--text-3);
+  text-decoration-line: line-through;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+}
 
 /* ── Barra de formatação ── */
 .qn-format-bar {

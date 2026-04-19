@@ -21,6 +21,19 @@
         <h2 class="kb-title">Kanban</h2>
       </div>
       <div class="kb-header-actions">
+        <button class="kb-btn-icon" @click="openArchivedModal" title="Ver arquivadas">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="21 8 21 21 3 21 3 8"/>
+            <rect x="1" y="3" width="22" height="5" rx="1"/>
+            <line x1="10" y1="12" x2="14" y2="12"/>
+          </svg>
+        </button>
+        <button class="kb-btn-icon" @click="expandAllBoards" title="Expandir todos os boards">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="7 15 12 10 17 15"/>
+            <polyline points="7 21 12 16 17 21"/>
+          </svg>
+        </button>
         <button class="kb-btn-icon" @click="openCreateBoardModal" title="Novo board">
           <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -45,7 +58,7 @@
           v-for="(board, boardIndex) in kanban.boards"
           :key="board.id"
           class="kb-board"
-          :class="{ 'drop-target': dragState.hoverBoardId === board.id }"
+          :class="{ 'drop-target': dragState.hoverBoardId === board.id, collapsed: isBoardCollapsed(board.id) }"
           @dragover.prevent="onBoardDragOver(board.id)"
           @dragleave="onBoardDragLeave(board.id)"
           @drop.prevent="onBoardDrop(board.id)"
@@ -56,6 +69,16 @@
               <span class="kb-board-count">{{ board.cards.length }} tarefa{{ board.cards.length === 1 ? '' : 's' }}</span>
             </div>
             <div class="kb-board-actions">
+              <button
+                class="kb-mini"
+                @click="toggleBoardCollapsed(board.id)"
+                :title="isBoardCollapsed(board.id) ? 'Expandir board' : 'Minimizar board'"
+              >
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <polyline v-if="isBoardCollapsed(board.id)" points="6 9 12 15 18 9"/>
+                  <polyline v-else points="6 15 12 9 18 15"/>
+                </svg>
+              </button>
               <button class="kb-mini" @click="openCreateTaskModal(board.id)" title="Nova tarefa">
                 <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
@@ -83,7 +106,11 @@
             </div>
           </header>
 
-          <div class="kb-cards">
+          <div v-if="isBoardCollapsed(board.id)" class="kb-collapsed-hint">
+            {{ board.cards.length }} tarefa{{ board.cards.length === 1 ? '' : 's' }} oculta{{ board.cards.length === 1 ? '' : 's' }}
+          </div>
+
+          <div v-else class="kb-cards">
             <article
               v-for="(task, taskIndex) in board.cards"
               :key="task.id"
@@ -109,6 +136,15 @@
               <div class="kb-card-actions">
                 <button class="kb-ghost" @click="openEditTaskModal(board.id, task)" title="Editar tarefa">Editar</button>
                 <button
+                  v-if="boardIndex === kanban.boards.length - 1"
+                  class="kb-archive"
+                  @click="archiveTask(task.id)"
+                  title="Arquivar tarefa concluida"
+                >
+                  Arquivar
+                </button>
+                <button
+                  v-else
                   class="kb-next"
                   @click="moveToNext(board.id, task.id, boardIndex)"
                   :disabled="boardIndex === kanban.boards.length - 1"
@@ -198,6 +234,39 @@
       </div>
     </div>
   </Teleport>
+
+  <Teleport to="body">
+    <div v-if="showArchivedModal" class="kb-overlay" @click.self="closeArchivedModal">
+      <div class="kb-modal" role="dialog" aria-modal="true">
+        <header class="kb-modal-header">
+          <h3>Tarefas arquivadas</h3>
+          <button class="kb-btn-icon" @click="closeArchivedModal" title="Fechar">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </header>
+
+        <div class="kb-archived-list">
+          <div v-if="kanban.archivedTasks.length === 0" class="kb-archived-empty">
+            Nenhuma tarefa arquivada.
+          </div>
+
+          <article v-for="task in kanban.archivedTasks" :key="task.id" class="kb-archived-item">
+            <div class="kb-archived-head">
+              <h4>{{ task.title }}</h4>
+              <button class="kb-restore" @click="restoreTask(task.id)">Restaurar</button>
+            </div>
+            <p v-if="task.description" class="kb-archived-desc">{{ task.description }}</p>
+            <div class="kb-archived-meta">
+              <span>{{ task.kanban_board_title || 'Board' }}</span>
+              <span>Arquivada em {{ formatDate(task.archived_at) }}</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup>
@@ -222,6 +291,8 @@ const taskDescription = ref('')
 const taskError = ref('')
 const taskBoardId = ref(null)
 const editingTaskId = ref(null)
+const collapsedBoards = ref({})
+const showArchivedModal = ref(false)
 
 const dragState = reactive({
   taskId: null,
@@ -351,6 +422,29 @@ async function moveToNext(boardId, taskId, boardIndex) {
   await kanban.moveTaskToNextBoard(taskId, boardId)
 }
 
+async function archiveTask(taskId) {
+  await kanban.archiveTask(taskId)
+}
+
+async function openArchivedModal() {
+  await kanban.fetchArchivedTasks()
+  showArchivedModal.value = true
+}
+
+function closeArchivedModal() {
+  showArchivedModal.value = false
+}
+
+async function restoreTask(taskId) {
+  const targetBoardId = kanban.boards[0]?.id || null
+  await kanban.restoreTask(taskId, targetBoardId)
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
 function onTaskDragStart(taskId, fromBoardId) {
   dragState.taskId = taskId
   dragState.fromBoardId = fromBoardId
@@ -404,6 +498,21 @@ function resetDrag() {
   dragState.fromBoardId = null
   dragState.hoverBoardId = null
   dragState.hoverIndex = null
+}
+
+function isBoardCollapsed(boardId) {
+  return Boolean(collapsedBoards.value[boardId])
+}
+
+function toggleBoardCollapsed(boardId) {
+  collapsedBoards.value = {
+    ...collapsedBoards.value,
+    [boardId]: !collapsedBoards.value[boardId]
+  }
+}
+
+function expandAllBoards() {
+  collapsedBoards.value = {}
 }
 </script>
 
@@ -530,6 +639,9 @@ function resetDrag() {
   padding: 10px;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
+.kb-board.collapsed {
+  background: rgba(15, 23, 42, 0.5);
+}
 .kb-board.drop-target {
   border-color: rgba(125, 211, 252, 0.65);
   box-shadow: 0 0 0 2px rgba(125, 211, 252, 0.2);
@@ -575,6 +687,14 @@ function resetDrag() {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.kb-collapsed-hint {
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(2, 6, 23, 0.4);
 }
 .kb-card {
   border: 1px solid rgba(148, 163, 184, 0.3);
@@ -643,6 +763,15 @@ function resetDrag() {
 .kb-next {
   border-color: rgba(125, 211, 252, 0.42);
   color: #7dd3fc;
+}
+.kb-archive {
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  border-radius: 8px;
+  background: rgba(20, 83, 45, 0.28);
+  color: #86efac;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
 }
 .kb-next:disabled {
   opacity: 0.45;
@@ -748,6 +877,69 @@ function resetDrag() {
   background: rgba(15, 23, 42, 0.8);
   color: #e2e8f0;
   border-color: rgba(148, 163, 184, 0.3);
+}
+
+.kb-archived-list {
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kb-archived-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.kb-archived-item {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.7);
+  padding: 10px;
+}
+
+.kb-archived-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kb-archived-head h4 {
+  margin: 0;
+  font-size: 13px;
+  color: #f8fafc;
+}
+
+.kb-restore {
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  border-radius: 8px;
+  background: rgba(14, 116, 144, 0.22);
+  color: #7dd3fc;
+  font-size: 11px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.kb-archived-desc {
+  margin: 8px 0 6px;
+  font-size: 12px;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.kb-archived-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10.5px;
+  color: #94a3b8;
 }
 
 @media (max-width: 720px) {
