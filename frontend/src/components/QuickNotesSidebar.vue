@@ -111,6 +111,7 @@
           :data-placeholder="'Escreva sua anotação rápida...'"
           @input="onEditorInput"
           @change="onEditorChange"
+          @click="onEditorClick"
         ></div>
 
         <!-- Barra de formatação -->
@@ -215,25 +216,30 @@ function onEditorInput() {
 function onEditorChange(event) {
   const target = event?.target
   if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return
-  const item = target.closest('.qn-check-item')
-  if (!item) return
+  const item = ensureChecklistItemStructure(target)
 
   if (target.checked) {
     target.setAttribute('checked', 'checked')
-    item.classList.add('checked')
+    item?.classList.add('checked')
   } else {
     target.removeAttribute('checked')
-    item.classList.remove('checked')
+    item?.classList.remove('checked')
   }
 
   onEditorInput()
 }
 
+function onEditorClick(event) {
+  const target = event?.target
+  if (!(target instanceof HTMLInputElement) || target.type !== 'checkbox') return
+  onEditorChange(event)
+}
+
 function syncChecklistVisualState(root) {
   if (!root) return
-  const checks = root.querySelectorAll('.qn-check-item input[type="checkbox"]')
+  const checks = root.querySelectorAll('input[type="checkbox"]')
   checks.forEach((input) => {
-    const item = input.closest('.qn-check-item')
+    const item = ensureChecklistItemStructure(input)
     const isChecked = input.hasAttribute('checked') || input.checked
     input.checked = isChecked
     if (isChecked) {
@@ -244,6 +250,33 @@ function syncChecklistVisualState(root) {
       item?.classList.remove('checked')
     }
   })
+}
+
+function ensureChecklistItemStructure(input) {
+  if (!(input instanceof HTMLInputElement) || input.type !== 'checkbox') return null
+
+  input.classList.add('qn-check-input')
+
+  let item = input.closest('.qn-check-item')
+  if (!item) {
+    const maybeWrapper = input.parentElement
+    if (maybeWrapper) {
+      maybeWrapper.classList.add('qn-check-item')
+      item = maybeWrapper
+    }
+  }
+
+  if (!item) return null
+
+  let textEl = input.nextElementSibling
+  if (!(textEl instanceof HTMLElement)) {
+    textEl = document.createElement('span')
+    textEl.appendChild(document.createTextNode('\u200B'))
+    item.appendChild(textEl)
+  }
+
+  textEl.classList.add('qn-check-text')
+  return item
 }
 
 function saveActive() {
@@ -694,6 +727,13 @@ function formatDate(dateStr) {
   accent-color: var(--purple-2);
 }
 
+.qn-modal-editor input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  accent-color: var(--purple-2);
+}
+
 .qn-modal-editor .qn-check-text {
   flex: 1;
   min-height: 24px;
@@ -704,6 +744,24 @@ function formatDate(dateStr) {
 }
 
 .qn-modal-editor .qn-check-item.checked .qn-check-text {
+  border-color: var(--border-soft);
+  background: var(--surface);
+  color: var(--text-3);
+  text-decoration-line: line-through;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 1px;
+}
+
+.qn-modal-editor input[type='checkbox'] + span {
+  flex: 1;
+  min-height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 2px 8px;
+  transition: border-color var(--transition), background var(--transition), color var(--transition);
+}
+
+.qn-modal-editor input[type='checkbox']:checked + span {
   border-color: var(--border-soft);
   background: var(--surface);
   color: var(--text-3);
