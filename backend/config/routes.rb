@@ -23,6 +23,10 @@ Rails.application.routes.draw do
 
       resources :tags
       resources :quick_notes
+      resources :kanban_boards, only: [:index, :create, :update, :destroy] do
+        resources :kanban_tasks, only: [:create], shallow: true
+      end
+      resources :kanban_tasks, only: [:update, :destroy]
 
       # Recent and global search (must come BEFORE the shallow notes resources)
       get "notes/recent", to: "notes#recent"

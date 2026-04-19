@@ -9,6 +9,8 @@ class User < ApplicationRecord
   has_many :notes, through: :notebooks
   has_many :tags, dependent: :destroy
   has_many :quick_notes, dependent: :destroy
+  has_many :kanban_boards, dependent: :destroy
+  has_many :kanban_tasks, through: :kanban_boards
   has_one_attached :cover_image
 
   validates :name, presence: true
