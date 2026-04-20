@@ -367,28 +367,53 @@ function sanitizeEditorContent(html) {
   })
 }
 
+function normalizedTitle() {
+  const title = noteTitle.value?.trim()
+  if (title) return title
+  return note.value?.title?.trim() || 'Nova Nota'
+}
+
+function buildSavePayload(extra = {}) {
+  return {
+    title: normalizedTitle(),
+    content: sanitizeEditorContent(editor.value?.getHTML() || ''),
+    ...extra
+  }
+}
+
+async function saveNoteWithFeedback(payload) {
+  if (!note.value) return null
+  try {
+    const updated = await notesStore.save(note.value.id, payload)
+    note.value = updated
+    if (!noteTitle.value?.trim()) noteTitle.value = updated.title || 'Nova Nota'
+    return updated
+  } catch (error) {
+    const apiErrors = error?.response?.data?.errors
+    const message = Array.isArray(apiErrors) ? apiErrors.join(', ') : error?.message
+    console.warn('Falha ao salvar nota:', message)
+    return null
+  }
+}
+
 async function addTagToNote(tag) {
   if (!note.value) return
   const currentIds = (note.value.tags || []).map(t => t.id)
   const newIds = [...currentIds, tag.id]
-  const updated = await notesStore.save(note.value.id, {
-    title: noteTitle.value,
-    content: editor.value?.getHTML() || '',
+  const updated = await saveNoteWithFeedback(buildSavePayload({
     tag_ids: newIds
-  })
-  note.value = updated
+  }))
+  if (!updated) return
   showTagPicker.value = false
 }
 
 async function removeTagFromNote(tag) {
   if (!note.value) return
   const newIds = (note.value.tags || []).filter(t => t.id !== tag.id).map(t => t.id)
-  const updated = await notesStore.save(note.value.id, {
-    title: noteTitle.value,
-    content: editor.value?.getHTML() || '',
+  const updated = await saveNoteWithFeedback(buildSavePayload({
     tag_ids: newIds
-  })
-  note.value = updated
+  }))
+  if (!updated) return
 }
 
 // Close picker when clicking outside
@@ -470,12 +495,10 @@ function debounceSave() {
   lastSaved.value = false
   saveTimeout = setTimeout(async () => {
     if (!note.value) return
-    const safeContent = sanitizeEditorContent(editor.value?.getHTML() || '')
-    await notesStore.save(note.value.id, {
-      title: noteTitle.value,
-      content: safeContent,
+    const updated = await saveNoteWithFeedback(buildSavePayload({
       diagram_data: boards.value
-    })
+    }))
+    if (!updated) return
     lastSaved.value = true
     setTimeout(() => { lastSaved.value = false }, 3000)
   }, 1200)
@@ -531,12 +554,10 @@ function debounceDiagramSave() {
   clearTimeout(diagramSaveTimeout)
   diagramSaveTimeout = setTimeout(async () => {
     if (!note.value) return
-    const safeContent = sanitizeEditorContent(editor.value?.getHTML() || '')
-    await notesStore.save(note.value.id, {
-      title: noteTitle.value,
-      content: safeContent,
+    const updated = await saveNoteWithFeedback(buildSavePayload({
       diagram_data: boards.value
-    })
+    }))
+    if (!updated) return
     lastSaved.value = true
     setTimeout(() => { lastSaved.value = false }, 3000)
   }, 900)
