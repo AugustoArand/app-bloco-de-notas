@@ -24,9 +24,14 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
 
   allow do
     origins do |origin, _env|
-      next false if origin.blank?
+      begin
+        next false if origin.blank?
 
-      allowed_origins.include?(origin.strip)
+        allowed_origins.include?(origin.strip)
+      rescue StandardError => e
+        Rails.logger.warn("CORS origin check failed: #{e.class} - #{e.message}")
+        false
+      end
     end
 
     resource "*",

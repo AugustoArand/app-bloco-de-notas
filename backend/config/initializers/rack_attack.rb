@@ -1,6 +1,10 @@
 require "time"
 
 class Rack::Attack
+  # Keep throttling independent from Rails.cache backends (e.g. Solid Cache/DB)
+  # so auth does not fail if cache services are unavailable.
+  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+
   # Login endpoint gets a tighter limit to reduce brute-force attempts.
   throttle("auth/sign_in/ip", limit: 10, period: 60.seconds) do |req|
     req.ip if req.path == "/auth/sign_in" && req.post?
