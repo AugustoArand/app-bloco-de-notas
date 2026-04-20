@@ -1,20 +1,32 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
+  allowed_origins = ENV.fetch("CORS_ALLOWED_ORIGINS", "")
+                       .split(",")
+                       .map(&:strip)
+                       .reject(&:blank?)
+
+  frontend_url = ENV["FRONTEND_URL"].to_s.strip
+  allowed_origins << frontend_url if frontend_url.present?
+
+  # Production fallback to the known app URL when env vars are missing.
+  if allowed_origins.empty?
+    allowed_origins << "https://app-bloco-de-notas.vercel.app"
+  end
+
+  # Allow local frontends only in development/test.
+  if Rails.env.development? || Rails.env.test?
+    allowed_origins.concat([
+      "http://localhost:5173",
+      "http://127.0.0.1:5173"
+    ])
+  end
+
+  allowed_origins.uniq!
+
   allow do
     origins do |origin, _env|
       next false if origin.blank?
 
-      normalized_origin = origin.strip
-      frontend_url = ENV["FRONTEND_URL"].to_s.strip
-
-      explicit_origins = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://app-bloco-de-notas.vercel.app"
-      ]
-
-      explicit_origins.include?(normalized_origin) ||
-        normalized_origin.match?(/\Ahttps:\/\/[^.]+\.vercel\.app\z/) ||
-        (frontend_url.present? && normalized_origin == frontend_url)
+      allowed_origins.include?(origin.strip)
     end
 
     resource "*",
