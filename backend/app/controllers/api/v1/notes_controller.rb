@@ -91,10 +91,22 @@ module Api
 
       def note_params
         permitted = params.require(:note).permit(:title, :content)
-        if params.dig(:note, :diagram_data).present?
-          permitted[:diagram_data] = params[:note][:diagram_data]
+        diagram_data = params.dig(:note, :diagram_data)
+        unless diagram_data.nil?
+          permitted[:diagram_data] = normalize_json_value(diagram_data)
         end
         permitted
+      end
+
+      def normalize_json_value(value)
+        case value
+        when ActionController::Parameters
+          value.to_unsafe_h.transform_values { |v| normalize_json_value(v) }
+        when Array
+          value.map { |v| normalize_json_value(v) }
+        else
+          value
+        end
       end
 
       def note_summary_json(note)

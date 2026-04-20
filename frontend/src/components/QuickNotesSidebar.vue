@@ -713,6 +713,31 @@ function formatDate(dateStr) {
 .qn-modal-editor ol { padding-left: 20px; margin: 4px 0; }
 .qn-modal-editor li { margin: 2px 0; }
 
+.qn-modal-editor ol > li::marker {
+  color: var(--purple-2);
+  font-weight: 700;
+}
+
+.qn-modal-editor ul > li::marker {
+  color: #2dd4bf;
+  font-weight: 700;
+}
+
+.qn-modal-editor ol > li:focus-within,
+.qn-modal-editor ul > li:focus-within,
+.qn-modal-editor ol > li:hover,
+.qn-modal-editor ul > li:hover {
+  font-weight: 700;
+  font-size: 1.04em;
+}
+
+.qn-modal-editor ol > li:focus-within::marker,
+.qn-modal-editor ul > li:focus-within::marker,
+.qn-modal-editor ol > li:hover::marker,
+.qn-modal-editor ul > li:hover::marker {
+  font-weight: 800;
+}
+
 .qn-modal-editor .qn-check-item {
   display: flex;
   align-items: center;
