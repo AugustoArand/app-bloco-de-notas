@@ -15,6 +15,16 @@ class Rack::Attack
     req.ip if req.path.start_with?("/api/v1/")
   end
 
+  # AI endpoints are expensive (OpenAI cost + thread blocking up to 60s).
+  # 10 requests per minute per user (identified by JWT sub via header) prevents
+  # runaway usage. Falls back to IP if no Authorization header is present.
+  throttle("api/v1/ai/user", limit: 10, period: 1.minute) do |req|
+    if req.path.start_with?("/api/v1/ai/")
+      token = req.get_header("HTTP_AUTHORIZATION").to_s.split(" ").last
+      token.present? ? token : req.ip
+    end
+  end
+
   self.throttled_responder = lambda do |request|
     now = Time.now.utc
     match_data = request.env["rack.attack.match_data"] || {}
