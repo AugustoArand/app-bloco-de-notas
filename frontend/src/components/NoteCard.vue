@@ -1,5 +1,5 @@
 <template>
-  <div class="note-card" @click="$emit('open', note)">
+  <div class="note-card" :class="`card-style-${note.card_style || 'default'}`" @click="$emit('open', note)">
     <div class="card-header">
       <h3 class="card-title">{{ note.title || 'Sem título' }}</h3>
       <span class="card-time">{{ timeAgo(note.accessed_at || note.updated_at) }}</span>
@@ -127,4 +127,11 @@ function timeAgo(dateStr) {
   background: var(--surface);
   border-radius: 99px;
 }
+
+.note-card.card-style-purple { border-left: 3px solid #a78bfa; }
+.note-card.card-style-blue   { border-left: 3px solid #60a5fa; }
+.note-card.card-style-green  { border-left: 3px solid #4ade80; }
+.note-card.card-style-orange { border-left: 3px solid #fb923c; }
+.note-card.card-style-red    { border-left: 3px solid #f87171; }
+.note-card.card-style-yellow { border-left: 3px solid #facc15; }
 </style>

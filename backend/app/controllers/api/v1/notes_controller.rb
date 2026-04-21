@@ -90,7 +90,7 @@ module Api
       end
 
       def note_params
-        permitted = params.require(:note).permit(:title, :content)
+        permitted = params.require(:note).permit(:title, :content, :card_style)
         diagram_data = params.dig(:note, :diagram_data)
         unless diagram_data.nil?
           permitted[:diagram_data] = normalize_json_value(diagram_data)
@@ -117,6 +117,7 @@ module Api
           notebook_id: note.notebook_id,
           notebook_name: note.notebook.name,
           tags: note.tags.map { |t| { id: t.id, name: t.name, color: t.color } },
+          card_style: note.card_style || 'default',
           accessed_at: note.accessed_at,
           created_at: note.created_at,
           updated_at: note.updated_at
@@ -136,6 +137,7 @@ module Api
           notebook_id: note.notebook_id,
           notebook_name: note.notebook.name,
           tags: note.tags.map { |t| { id: t.id, name: t.name, color: t.color } },
+          card_style: note.card_style || 'default',
           images: images,
           accessed_at: note.accessed_at,
           created_at: note.created_at,

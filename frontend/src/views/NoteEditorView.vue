@@ -582,46 +582,187 @@ function stripHtml(html) {
 function handleExportPdf() {
   if (!note.value) return
 
-  const pdf = new jsPDF({
-    unit: 'pt',
-    format: 'a4'
-  })
-
+  const pdf = new jsPDF({ unit: 'pt', format: 'a4' })
   const marginX = 48
   const pageWidth = 595.28
-  const maxTextWidth = pageWidth - marginX * 2
-
-  const title = noteTitle.value?.trim() || 'Sem titulo'
-  const bodyText = stripHtml(editor.value?.getHTML() || '')
-
-  pdf.setFont('helvetica', 'bold')
-  pdf.setFontSize(18)
-  pdf.text(title, marginX, 60)
-
-  pdf.setFont('helvetica', 'normal')
-  pdf.setFontSize(11)
-  pdf.setTextColor(90, 93, 112)
-  pdf.text(`Exportado em ${new Date().toLocaleString('pt-BR')}`, marginX, 80)
-
-  pdf.setTextColor(20, 20, 24)
-  pdf.setFontSize(12)
-  const lines = pdf.splitTextToSize(bodyText, maxTextWidth)
-
-  let y = 110
-  const lineHeight = 16
   const pageHeight = 841.89
 
-  lines.forEach((line) => {
-    if (y > pageHeight - 60) {
+  let y = 60
+
+  function checkNewPage(h) {
+    if (y + h > pageHeight - 48) {
       pdf.addPage()
       y = 60
     }
-    pdf.text(line, marginX, y)
-    y += lineHeight
-  })
+  }
 
-  const filename = `${title.replace(/[^a-z0-9-_]+/gi, '_') || 'nota'}.pdf`
-  pdf.save(filename)
+  function renderSimpleText(text, { size = 12, style = 'normal', color = [20, 20, 24], indent = 0 } = {}) {
+    if (!text.trim()) return
+    pdf.setFont('helvetica', style)
+    pdf.setFontSize(size)
+    pdf.setTextColor(...color)
+    const lh = size * 1.4
+    const lines = pdf.splitTextToSize(text.trim(), pageWidth - marginX * 2 - indent)
+    lines.forEach((line) => {
+      checkNewPage(lh)
+      pdf.text(line, marginX + indent, y)
+      y += lh
+    })
+  }
+
+  function getInlineSegments(node, bold = false, italic = false) {
+    const out = []
+    node.childNodes.forEach((child) => {
+      if (child.nodeType === 3) {
+        if (child.textContent) out.push({ t: child.textContent, bold, italic })
+      } else if (child.nodeType === 1) {
+        const tag = child.tagName.toLowerCase()
+        out.push(
+          ...getInlineSegments(
+            child,
+            bold || tag === 'strong' || tag === 'b',
+            italic || tag === 'em' || tag === 'i',
+          ),
+        )
+      }
+    })
+    return out
+  }
+
+  function renderInline(segments, { size = 12, base = 'normal', color = [20, 20, 24], indent = 0 } = {}) {
+    if (!segments.length) return
+    const lh = size * 1.4
+
+    const chunks = []
+    segments.forEach(({ t, bold, italic }) => {
+      const style = bold && italic ? 'bolditalic' : bold ? 'bold' : italic ? 'italic' : base
+      if (chunks.length && chunks[chunks.length - 1].style === style) {
+        chunks[chunks.length - 1].text += t
+      } else {
+        chunks.push({ text: t, style })
+      }
+    })
+
+    if (chunks.length === 1) {
+      renderSimpleText(chunks[0].text, { size, style: chunks[0].style, color, indent })
+      return
+    }
+
+    let x = marginX + indent
+    for (const chunk of chunks) {
+      pdf.setFont('helvetica', chunk.style)
+      pdf.setFontSize(size)
+      pdf.setTextColor(...color)
+
+      const tokens = chunk.text.split(/(\s+)/)
+      for (const token of tokens) {
+        if (!token) continue
+        const tw = pdf.getTextWidth(token)
+        if (token.trim() === '') {
+          x += tw
+          continue
+        }
+        if (x + tw > pageWidth - marginX && x > marginX + indent) {
+          y += lh
+          checkNewPage(lh)
+          x = marginX + indent
+          pdf.setFont('helvetica', chunk.style)
+          pdf.setFontSize(size)
+        }
+        checkNewPage(lh)
+        pdf.text(token, x, y)
+        x += tw
+      }
+    }
+    y += lh
+  }
+
+  function processBlock(node) {
+    if (node.nodeType !== 1) return
+    const tag = node.tagName.toLowerCase()
+
+    if (tag === 'ul' || tag === 'ol') {
+      node.querySelectorAll(':scope > li').forEach((li, i) => {
+        const bullet = tag === 'ul' ? '•' : `${i + 1}.`
+        const lh = 12 * 1.4
+        checkNewPage(lh)
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(12)
+        pdf.setTextColor(20, 20, 24)
+        pdf.text(bullet, marginX + 8, y)
+        renderInline(getInlineSegments(li), { size: 12, indent: 24 })
+      })
+      y += 2
+      return
+    }
+
+    if (tag === 'hr') {
+      y += 6
+      checkNewPage(8)
+      pdf.setDrawColor(200, 200, 200)
+      pdf.line(marginX, y, pageWidth - marginX, y)
+      y += 10
+      return
+    }
+
+    const segs = getInlineSegments(node)
+    const hasContent = segs.some((s) => s.t.trim())
+
+    switch (tag) {
+      case 'h1':
+        if (!hasContent) return
+        y += 8
+        renderInline(segs, { size: 20, base: 'bold' })
+        y += 4
+        break
+      case 'h2':
+        if (!hasContent) return
+        y += 6
+        renderInline(segs, { size: 16, base: 'bold' })
+        y += 2
+        break
+      case 'h3':
+        if (!hasContent) return
+        y += 4
+        renderInline(segs, { size: 13, base: 'bold' })
+        y += 2
+        break
+      case 'p':
+        if (!hasContent) {
+          y += 8
+          return
+        }
+        renderInline(segs, { size: 12 })
+        y += 2
+        break
+      case 'blockquote':
+        if (!hasContent) return
+        y += 4
+        renderInline(segs, { size: 12, base: 'italic', color: [80, 80, 80], indent: 24 })
+        y += 4
+        break
+      case 'pre':
+      case 'code':
+        renderSimpleText(node.textContent || '', { size: 10, color: [60, 60, 60], indent: 16 })
+        y += 4
+        break
+      default:
+        if (hasContent) renderInline(segs, { size: 12 })
+    }
+  }
+
+  const title = noteTitle.value?.trim() || 'Sem titulo'
+  renderSimpleText(title, { size: 20, style: 'bold' })
+  y += 2
+  renderSimpleText(`Exportado em ${new Date().toLocaleString('pt-BR')}`, { size: 10, color: [90, 93, 112] })
+  y += 14
+
+  const html = editor.value?.getHTML() || ''
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(html, 'text/html')
+  doc.body.childNodes.forEach((node) => processBlock(node))
+
+  pdf.save(`${title.replace(/[^a-z0-9-_]+/gi, '_') || 'nota'}.pdf`)
 }
 
 function getNotePlainText() {
