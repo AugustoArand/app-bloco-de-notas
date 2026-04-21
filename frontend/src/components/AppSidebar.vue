@@ -225,20 +225,45 @@
           </div>
 
           <div v-else class="note-list">
-            <router-link
+            <div
               v-for="note in notesStore.notes"
               :key="note.id"
-              :to="`/notes/${note.id}`"
-              class="note-item"
-              :class="{ active: $route.params.id == note.id }"
+              class="note-item-wrapper"
+              :class="`style-${note.card_style || 'default'}`"
             >
-              <div class="note-item-left">
+              <router-link
+                :to="`/notes/${note.id}`"
+                class="note-item"
+                :class="{ active: $route.params.id == note.id }"
+              >
                 <div class="note-item-info">
                   <span class="note-title">{{ note.title || 'Sem título' }}</span>
                   <span class="note-date">{{ formatDate(note.updated_at) }}</span>
                 </div>
+              </router-link>
+
+              <button
+                class="style-picker-btn"
+                @click.prevent.stop="toggleStylePicker(note.id)"
+                title="Estilo do card"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+
+              <div v-if="stylePickerNoteId === note.id" class="style-popover" @click.stop>
+                <button
+                  v-for="s in CARD_STYLES"
+                  :key="s.id"
+                  class="style-dot"
+                  :class="{ 'dot-active': (note.card_style || 'default') === s.id }"
+                  :style="s.color ? { background: s.color } : {}"
+                  :title="s.label"
+                  @click="setNoteStyle(note, s.id)"
+                ></button>
               </div>
-            </router-link>
+            </div>
 
             <div v-if="!notesStore.notes.length" class="empty-notes">
               <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="opacity:0.3">
@@ -277,7 +302,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNotebooksStore } from '@/stores/notebooks'
@@ -301,6 +326,17 @@ const editingNotebook = ref(null)
 const editName = ref('')
 const editInput = ref(null)
 const showTagManager = ref(false)
+const stylePickerNoteId = ref(null)
+
+const CARD_STYLES = [
+  { id: 'default', label: 'Padrão',    color: null },
+  { id: 'purple',  label: 'Roxo',      color: '#a78bfa' },
+  { id: 'blue',    label: 'Azul',      color: '#60a5fa' },
+  { id: 'green',   label: 'Verde',     color: '#4ade80' },
+  { id: 'orange',  label: 'Laranja',   color: '#fb923c' },
+  { id: 'red',     label: 'Vermelho',  color: '#f87171' },
+  { id: 'yellow',  label: 'Amarelo',   color: '#facc15' },
+]
 
 const COLOR_DOTS = {
   purple: '#8b5cf6', blue: '#3b82f6', green: '#22c55e', amber: '#f59e0b',
@@ -397,6 +433,28 @@ function formatDate(dateStr) {
   const d = new Date(dateStr)
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
+
+function toggleStylePicker(noteId) {
+  if (stylePickerNoteId.value === noteId) {
+    stylePickerNoteId.value = null
+    document.removeEventListener('click', closeStylePickerGlobal)
+  } else {
+    stylePickerNoteId.value = noteId
+    nextTick(() => document.addEventListener('click', closeStylePickerGlobal, { once: true }))
+  }
+}
+
+function closeStylePickerGlobal() {
+  stylePickerNoteId.value = null
+}
+
+async function setNoteStyle(note, styleId) {
+  note.card_style = styleId
+  stylePickerNoteId.value = null
+  await notesStore.save(note.id, { card_style: styleId })
+}
+
+onUnmounted(() => document.removeEventListener('click', closeStylePickerGlobal))
 
 watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: true })
 </script>
@@ -662,53 +720,111 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .note-list {
   flex: 1;
   overflow-y: auto;
-  padding: 0;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
+
+.note-item-wrapper {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-left: 3px solid transparent;
+  border-radius: 8px;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+.note-item-wrapper:hover {
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+.note-item-wrapper.style-purple { border-left-color: #a78bfa; }
+.note-item-wrapper.style-blue   { border-left-color: #60a5fa; }
+.note-item-wrapper.style-green  { border-left-color: #4ade80; }
+.note-item-wrapper.style-orange { border-left-color: #fb923c; }
+.note-item-wrapper.style-red    { border-left-color: #f87171; }
+.note-item-wrapper.style-yellow { border-left-color: #facc15; }
 
 .note-item {
   display: flex;
   align-items: center;
-  padding: 9px 10px;
-  border-radius: 0;
+  padding: 10px 32px 10px 10px;
+  border-radius: 7px;
   cursor: pointer;
   transition: background var(--transition);
   text-decoration: none;
   color: inherit;
-  border: none;
-  border-bottom: 1px solid var(--border-soft);
 }
 .note-item:hover { background: var(--panel-hover); }
-.note-item.active {
-  background: var(--purple-dim);
-  border-bottom-color: rgba(217,119,6,0.2);
-}
-
-.note-item-left {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-  color: var(--text-3);
-}
-.note-item-left svg { flex-shrink: 0; margin-top: 2px; }
+.note-item.active { background: var(--purple-dim); }
+.note-item.active .note-title { color: var(--purple-3); }
 
 .note-item-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .note-title {
-  font-size: 13px; font-weight: 500;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.note-item.active .note-title { color: var(--purple-3); }
 .note-date { font-size: 11px; color: var(--text-3); }
+
+.style-picker-btn {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-3);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), background var(--transition);
+  padding: 0;
+}
+.note-item-wrapper:hover .style-picker-btn { opacity: 1; }
+.style-picker-btn:hover { background: var(--border-soft); color: var(--text); }
+
+.style-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  gap: 5px;
+  z-index: 100;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.style-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+  padding: 0;
+  background: var(--border-soft);
+}
+.style-dot:first-child { background: var(--border-soft); }
+.style-dot:hover { transform: scale(1.2); }
+.style-dot.dot-active { border-color: var(--text); }
 
 /* ===== TAGS SECTION ===== */
 .tags-section { border-top: 1px solid var(--border-soft); }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_18_121500) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_20_000000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -82,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_18_121500) do
 
   create_table "notes", force: :cascade do |t|
     t.datetime "accessed_at"
+    t.string "card_style", default: "default"
     t.text "content"
     t.datetime "created_at", null: false
     t.json "diagram_data", default: {}, null: false
