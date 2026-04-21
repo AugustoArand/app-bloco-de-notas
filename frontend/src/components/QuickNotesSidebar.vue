@@ -126,11 +126,35 @@
             <u>U</u>
           </button>
           <div class="qn-fmt-divider"></div>
-          <button class="qn-fmt-btn" @mousedown.prevent="fmtHighlight"      title="Marcador de texto">
-            <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-            </svg>
-          </button>
+          <div class="qn-highlight-wrap">
+            <button
+              class="qn-fmt-btn"
+              :class="{ 'qn-fmt-btn--active': showHighlightPicker }"
+              @mousedown.prevent="toggleHighlightPicker"
+              title="Marcador de texto"
+            >
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+              </svg>
+            </button>
+
+            <div class="qn-hl-picker" v-if="showHighlightPicker">
+              <button
+                v-for="c in HIGHLIGHT_COLORS"
+                :key="c.key"
+                class="qn-hl-dot"
+                :style="{ background: c.bg, borderColor: c.border }"
+                @mousedown.prevent="applyHighlight(c.bg)"
+                :title="c.label"
+              ></button>
+              <div class="qn-hl-divider"></div>
+              <button
+                class="qn-hl-remove"
+                @mousedown.prevent="removeHighlight"
+                title="Remover marcação"
+              >✕</button>
+            </div>
+          </div>
           <div class="qn-fmt-divider"></div>
           <button class="qn-fmt-btn" @mousedown.prevent="insertList(false)" title="Lista com marcadores">
             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -159,10 +183,19 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onUnmounted } from 'vue'
 import { useQuickNotesStore } from '@/stores/quickNotes'
 
 const store = useQuickNotesStore()
+
+const HIGHLIGHT_COLORS = [
+  { key: 'yellow', bg: 'rgba(251,191,36,0.35)',  border: 'rgba(251,191,36,0.6)',  label: 'Amarelo' },
+  { key: 'green',  bg: 'rgba(34,197,94,0.30)',   border: 'rgba(34,197,94,0.6)',   label: 'Verde'   },
+  { key: 'blue',   bg: 'rgba(59,130,246,0.30)',  border: 'rgba(59,130,246,0.6)',  label: 'Azul'    },
+  { key: 'purple', bg: 'rgba(124,58,237,0.28)',  border: 'rgba(124,58,237,0.6)',  label: 'Roxo'    },
+  { key: 'rose',   bg: 'rgba(244,63,94,0.25)',   border: 'rgba(244,63,94,0.6)',   label: 'Rosa'    },
+  { key: 'orange', bg: 'rgba(249,115,22,0.30)',  border: 'rgba(249,115,22,0.6)',  label: 'Laranja' },
+]
 
 // Remove dados legados do localStorage (migração para backend)
 localStorage.removeItem('quick_notes')
@@ -175,6 +208,7 @@ watch(() => store.isOpen, (open) => {
 const activeNote = ref(null)
 const editorRef  = ref(null)
 const saved = ref(false)
+const showHighlightPicker = ref(false)
 let saveTimer = null
 
 const colors = [
@@ -330,9 +364,75 @@ function fmt(command) {
   wrapSelection(map[command])
 }
 
-function fmtHighlight() {
-  wrapSelection('mark', { style: 'background:rgba(124,58,237,0.28);border-radius:3px;padding:0 2px' })
+// ── Highlight helpers ──────────────────────────────────────────────────────
+
+function getAncestorMark(range) {
+  let node = range.commonAncestorContainer
+  if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+  return node?.closest?.('mark') ?? null
 }
+
+function removeHighlightsInRange(range) {
+  if (!editorRef.value) return
+  const marks = [...editorRef.value.querySelectorAll('mark')].filter(m =>
+    range.intersectsNode(m)
+  )
+  marks.forEach(mark => {
+    const parent = mark.parentNode
+    while (mark.firstChild) parent.insertBefore(mark.firstChild, mark)
+    parent.removeChild(mark)
+  })
+}
+
+function toggleHighlightPicker() {
+  editorRef.value?.focus()
+  const sel = window.getSelection()
+  if (sel?.rangeCount) {
+    const range = sel.getRangeAt(0)
+    // If cursor/selection is inside an existing mark → remove it directly
+    if (getAncestorMark(range)) {
+      removeHighlightsInRange(range)
+      onEditorInput()
+      showHighlightPicker.value = false
+      return
+    }
+  }
+  showHighlightPicker.value = !showHighlightPicker.value
+}
+
+function applyHighlight(colorBg) {
+  editorRef.value?.focus()
+  const sel = window.getSelection()
+  if (!sel?.rangeCount) { showHighlightPicker.value = false; return }
+  const range = sel.getRangeAt(0)
+  // Remove any overlapping marks before applying new color
+  removeHighlightsInRange(range)
+  // Re-fetch selection after DOM mutation
+  const newSel = window.getSelection()
+  if (!newSel?.rangeCount) { showHighlightPicker.value = false; return }
+  wrapSelection('mark', { style: `background:${colorBg};border-radius:3px;padding:0 2px` })
+  showHighlightPicker.value = false
+}
+
+function removeHighlight() {
+  editorRef.value?.focus()
+  const sel = window.getSelection()
+  if (sel?.rangeCount) {
+    removeHighlightsInRange(sel.getRangeAt(0))
+    onEditorInput()
+  }
+  showHighlightPicker.value = false
+}
+
+// Close picker when clicking outside .qn-highlight-wrap
+function onDocMousedown(e) {
+  if (!e.target.closest('.qn-highlight-wrap')) showHighlightPicker.value = false
+}
+watch(showHighlightPicker, open => {
+  if (open) document.addEventListener('mousedown', onDocMousedown, true)
+  else      document.removeEventListener('mousedown', onDocMousedown, true)
+})
+onUnmounted(() => document.removeEventListener('mousedown', onDocMousedown, true))
 
 function insertList(ordered) {
   editorRef.value?.focus()
@@ -849,4 +949,79 @@ function formatDate(dateStr) {
   margin-left: 6px;
   white-space: nowrap;
 }
+
+/* ── Highlight picker ── */
+.qn-highlight-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.qn-fmt-btn--active {
+  background: var(--panel-hover);
+  color: var(--purple-2);
+}
+
+.qn-hl-picker {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: var(--shadow);
+  z-index: 400;
+  white-space: nowrap;
+}
+.qn-hl-picker::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--border);
+}
+
+.qn-hl-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  flex-shrink: 0;
+}
+.qn-hl-dot:hover { transform: scale(1.25); }
+
+.qn-hl-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+.qn-hl-remove {
+  font-size: 11px;
+  font-weight: 700;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-3);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.qn-hl-remove:hover { background: rgba(244,63,94,0.15); color: var(--red); border-color: var(--red); }
 </style>

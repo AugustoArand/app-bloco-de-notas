@@ -1,8 +1,9 @@
-import { Mark, mergeAttributes, markInputRule } from '@tiptap/core'
+import { Mark, mergeAttributes, markInputRule, InputRule } from '@tiptap/core'
 
-// Converts @word (followed by a space) into a mention mark.
-// The trailing space that triggers the rule is consumed; type a space
-// after the mention to continue writing normally.
+// Two trigger patterns:
+//   @palavra     → space-terminated, single word (space is consumed)
+//   @[palavras compostas] → bracket-terminated, any text (brackets are consumed,
+//                           displayed as "@palavras compostas")
 export default Mark.create({
   name: 'mention',
 
@@ -26,15 +27,30 @@ export default Mark.create({
     return ['span', mergeAttributes(HTMLAttributes, { class: 'mention' }), 0]
   },
 
-  // Typing "@word " applies the mention mark to "@word"
   addInputRules() {
     return [
+      // @word<space> — single word, trailing space consumed
       markInputRule({
         find: /(@[\wÀ-ſ]+)\s$/,
         type: this.type,
         getAttributes: match => ({
           label: (match[match.length - 1] || '').slice(1),
         }),
+      }),
+
+      // @[compound mention] — brackets consumed, displayed as "@compound mention"
+      new InputRule({
+        find: /@\[([^\]]+)\]$/,
+        handler: ({ state, range, match }) => {
+          const label = match[1]
+          const { tr, schema } = state
+          tr.replaceWith(
+            range.from,
+            range.to,
+            schema.text(`@${label}`, [this.type.create({ label })])
+          )
+          tr.removeStoredMark(this.type)
+        },
       }),
     ]
   },
