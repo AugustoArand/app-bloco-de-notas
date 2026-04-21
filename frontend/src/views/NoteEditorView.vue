@@ -292,6 +292,7 @@ import TaskItem from '@tiptap/extension-task-item'
 import CharacterCount from '@tiptap/extension-character-count'
 import { jsPDF } from 'jspdf'
 import CloudBlock from '@/extensions/CloudBlock'
+import MentionMark from '@/extensions/MentionMark'
 
 import EditorToolbar from '@/components/EditorToolbar.vue'
 import TableOfContents from '@/components/TableOfContents.vue'
@@ -299,12 +300,14 @@ import TagBadge from '@/components/TagBadge.vue'
 import MindMapBoard from '@/components/MindMapBoard.vue'
 import { useNotesStore } from '@/stores/notes'
 import { useTagsStore } from '@/stores/tags'
+import { useMentionsStore } from '@/stores/mentions'
 import api from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
 const notesStore = useNotesStore()
 const tagsStore = useTagsStore()
+const mentionsStore = useMentionsStore()
 
 const note = ref(null)
 const noteTitle = ref('')
@@ -432,7 +435,8 @@ const editor = useEditor({
     TaskList,
     TaskItem.configure({ nested: true }),
     CharacterCount,
-    CloudBlock
+    CloudBlock,
+    MentionMark
   ],
   content: '',
   editorProps: {
@@ -457,12 +461,37 @@ const editor = useEditor({
   },
   onUpdate() {
     debounceSave()
+    extractMentions()
   }
 })
 
 const wordCount = computed(() => {
   if (!editor.value) return 0
   return editor.value.storage.characterCount.words()
+})
+
+function extractMentions() {
+  if (!editor.value) return
+  const map = new Map()
+  editor.value.state.doc.descendants((node, pos) => {
+    if (!node.isText) return
+    node.marks.forEach(mark => {
+      if (mark.type.name === 'mention') {
+        const { label } = mark.attrs
+        if (!map.has(label)) {
+          map.set(label, { label, from: pos, to: pos + node.nodeSize, count: 1 })
+        } else {
+          map.get(label).count++
+        }
+      }
+    })
+  })
+  mentionsStore.setList([...map.values()])
+}
+
+mentionsStore.registerJump(mention => {
+  if (!editor.value) return
+  editor.value.chain().focus().setTextSelection({ from: mention.from, to: mention.to }).scrollIntoView().run()
 })
 
 async function loadNote(id) {
@@ -485,6 +514,7 @@ async function loadNote(id) {
   editorMode.value = 'text'
   if (editor.value) {
     editor.value.commands.setContent(sanitizeEditorContent(data.content || ''))
+    nextTick(() => extractMentions())
   }
   lastSaved.value = false
   if (!tagsStore.tags.length) tagsStore.fetch()
@@ -914,6 +944,7 @@ onBeforeUnmount(() => {
   clearTimeout(diagramSaveTimeout)
   editor.value?.destroy()
   document.removeEventListener('click', handleClickOutside)
+  mentionsStore.clear()
 })
 </script>
 
@@ -1583,6 +1614,22 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(226, 228, 240, 0.22);
   border-radius: 3px;
   padding: 0 3px;
+}
+
+/* Mention mark */
+.tiptap-content :deep(.mention) {
+  color: var(--purple-2);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-weight: 500;
+  font-size: 0.93em;
+  cursor: default;
+  transition: background 0.15s ease;
+}
+.tiptap-content :deep(.mention:hover) {
+  background: rgba(245, 158, 11, 0.22);
 }
 
 /* Image */
