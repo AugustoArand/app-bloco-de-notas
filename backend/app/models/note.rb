@@ -6,9 +6,9 @@ class Note < ApplicationRecord
   end
   has_many :note_tags, dependent: :destroy
 
-  validates :images, content_type: { in: %w[image/jpeg image/png image/gif image/webp], message: "deve ser JPEG, PNG, GIF ou WebP" },
-                     size: { less_than: 10.megabytes, message: "deve ter menos de 10MB" }
   has_many :tags, through: :note_tags
+
+  validate :validate_image_attachments
 
   validates :title, presence: true
 
@@ -20,5 +20,20 @@ class Note < ApplicationRecord
 
   def touch_accessed!
     update_column(:accessed_at, Time.current)
+  end
+
+  private
+
+  ALLOWED_IMAGE_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
+
+  def validate_image_attachments
+    images.each do |image|
+      unless ALLOWED_IMAGE_TYPES.include?(image.blob.content_type)
+        errors.add(:images, "deve ser JPEG, PNG, GIF ou WebP")
+      end
+      if image.blob.byte_size > 10.megabytes
+        errors.add(:images, "deve ter menos de 10MB")
+      end
+    end
   end
 end
