@@ -118,9 +118,10 @@ function addCentralNode() {
 }
 
 function onNodeDoubleClick({ node }) {
-  const label = window.prompt('Texto do no:', node?.data?.label || '')
-  if (!label || !node) return
+  const raw = window.prompt('Texto do no:', node?.data?.label || '')
+  if (!raw || !node) return
 
+  const label = raw.replace(/->/g, '→')
   nodes.value = nodes.value.map((n) =>
     n.id === node.id ? { ...n, data: { ...n.data, label } } : n
   )

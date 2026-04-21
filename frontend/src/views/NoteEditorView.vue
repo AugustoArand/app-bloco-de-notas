@@ -293,6 +293,7 @@ import CharacterCount from '@tiptap/extension-character-count'
 import { jsPDF } from 'jspdf'
 import CloudBlock from '@/extensions/CloudBlock'
 import MentionMark from '@/extensions/MentionMark'
+import ArrowShortcut from '@/extensions/ArrowShortcut'
 
 import EditorToolbar from '@/components/EditorToolbar.vue'
 import TableOfContents from '@/components/TableOfContents.vue'
@@ -436,7 +437,8 @@ const editor = useEditor({
     TaskItem.configure({ nested: true }),
     CharacterCount,
     CloudBlock,
-    MentionMark
+    MentionMark,
+    ArrowShortcut
   ],
   content: '',
   editorProps: {
