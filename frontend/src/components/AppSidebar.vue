@@ -275,28 +275,29 @@
             </div>
           </div>
 
-          <!-- Menções -->
-          <div v-if="isNoteRoute && mentionsStore.list.length > 0" class="mentions-panel">
-            <div class="mentions-header">
-              <span class="mentions-at">@</span>
-              <span class="section-title">Menções</span>
-            </div>
-            <ul class="mentions-list">
-              <li
-                v-for="item in mentionsStore.list"
-                :key="item.label"
-                class="mention-item"
-                @click="mentionsStore.jump(item)"
-              >
-                <span class="mention-chip">@{{ item.label }}</span>
-                <span v-if="item.count > 1" class="mention-count">{{ item.count }}</span>
-              </li>
-            </ul>
-          </div>
         </div>
 
       </Transition>
     </template>
+
+    <!-- Menções (sempre visível quando há menções na nota aberta) -->
+    <div v-if="!collapsed && isNoteRoute && mentionsStore.list.length > 0" class="mentions-panel">
+      <div class="mentions-header">
+        <span class="mentions-at">@</span>
+        <span class="section-title">Menções</span>
+      </div>
+      <ul class="mentions-list">
+        <li
+          v-for="item in mentionsStore.list"
+          :key="item.label"
+          class="mention-item"
+          @click="mentionsStore.jump(item)"
+        >
+          <span class="mention-chip">@{{ item.label }}</span>
+          <span v-if="item.count > 1" class="mention-count">{{ item.count }}</span>
+        </li>
+      </ul>
+    </div>
 
     <!-- ===== FOOTER ===== -->
     <div class="sidebar-footer" v-if="!collapsed">
