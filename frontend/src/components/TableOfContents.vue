@@ -1,31 +1,60 @@
 <template>
-  <nav class="toc" v-if="headings.length > 0">
-    <p class="toc-title">
-      <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/>
-      </svg>
-      Sumário
-    </p>
-    <ul class="toc-list">
-      <li
-        v-for="item in headings"
-        :key="item.id"
-        :class="['toc-item', `level-${item.level}`, { active: activeId === item.id }]"
-        @click="scrollTo(item)"
-      >
-        {{ item.text }}
-      </li>
-    </ul>
+  <nav class="toc" v-if="headings.length > 0 || mentionsStore.list.length > 0">
+
+    <!-- Sumário -->
+    <template v-if="headings.length > 0">
+      <p class="toc-title">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/>
+        </svg>
+        Sumário
+      </p>
+      <ul class="toc-list">
+        <li
+          v-for="item in headings"
+          :key="item.id"
+          :class="['toc-item', `level-${item.level}`, { active: activeId === item.id }]"
+          @click="scrollTo(item)"
+        >
+          {{ item.text }}
+        </li>
+      </ul>
+    </template>
+
+    <!-- Menções -->
+    <template v-if="mentionsStore.list.length > 0">
+      <div class="toc-divider" v-if="headings.length > 0" />
+      <p class="toc-title">
+        <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><path d="M16 11l2 2 4-4"/>
+        </svg>
+        Menções
+      </p>
+      <ul class="toc-list">
+        <li
+          v-for="item in mentionsStore.list"
+          :key="item.label"
+          class="mention-item"
+          @click="mentionsStore.jump(item)"
+        >
+          <span class="mention-chip">@{{ item.label }}</span>
+          <span v-if="item.count > 1" class="mention-count">{{ item.count }}</span>
+        </li>
+      </ul>
+    </template>
+
   </nav>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import { useMentionsStore } from '@/stores/mentions'
 
 const props = defineProps({
   editor: Object
 })
 
+const mentionsStore = useMentionsStore()
 const headings = ref([])
 const activeId = ref(null)
 
@@ -78,11 +107,18 @@ watch(() => props.editor?.state, () => {
   padding-left: 6px;
 }
 
+.toc-divider {
+  border: none;
+  border-top: 1px solid var(--border-soft);
+  margin: 16px 0 14px;
+}
+
 .toc-list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 1px;
+  margin-bottom: 4px;
 }
 
 /* ── Base item ── */
@@ -99,7 +135,7 @@ watch(() => props.editor?.state, () => {
 
 .toc-item:hover { background: var(--panel-hover); }
 
-/* ── H1 — máximo destaque ── */
+/* ── H1 ── */
 .toc-item.level-1 {
   font-size: 12.5px;
   font-weight: 650;
@@ -117,7 +153,7 @@ watch(() => props.editor?.state, () => {
   font-weight: 700;
 }
 
-/* ── H2 — destaque médio ── */
+/* ── H2 ── */
 .toc-item.level-2 {
   font-size: 12px;
   font-weight: 500;
@@ -131,7 +167,7 @@ watch(() => props.editor?.state, () => {
   background: rgba(124, 58, 237, 0.07);
 }
 
-/* ── H3 — destaque leve ── */
+/* ── H3 ── */
 .toc-item.level-3 {
   font-size: 11.5px;
   font-weight: 400;
@@ -145,7 +181,7 @@ watch(() => props.editor?.state, () => {
   background: rgba(124, 58, 237, 0.04);
 }
 
-/* ── H4+ — mínimo ── */
+/* ── H4+ ── */
 .toc-item.level-4,
 .toc-item.level-5,
 .toc-item.level-6 {
@@ -162,5 +198,42 @@ watch(() => props.editor?.state, () => {
   color: var(--text-3);
   border-left-color: rgba(124, 58, 237, 0.2);
   opacity: 1;
+}
+
+/* ── Mention items ── */
+.mention-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  gap: 6px;
+}
+.mention-item:hover { background: var(--panel-hover); }
+.mention-item:active { transform: scale(0.97); }
+
+.mention-chip {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--purple-2);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: 4px;
+  padding: 1px 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 130px;
+}
+
+.mention-count {
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--surface);
+  padding: 1px 5px;
+  border-radius: 99px;
+  flex-shrink: 0;
 }
 </style>

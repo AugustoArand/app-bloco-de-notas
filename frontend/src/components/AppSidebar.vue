@@ -280,25 +280,6 @@
       </Transition>
     </template>
 
-    <!-- Menções (sempre visível quando há menções na nota aberta) -->
-    <div v-if="!collapsed && isNoteRoute && mentionsStore.list.length > 0" class="mentions-panel">
-      <div class="mentions-header">
-        <span class="mentions-at">@</span>
-        <span class="section-title">Menções</span>
-      </div>
-      <ul class="mentions-list">
-        <li
-          v-for="item in mentionsStore.list"
-          :key="item.label"
-          class="mention-item"
-          @click="mentionsStore.jump(item)"
-        >
-          <span class="mention-chip">@{{ item.label }}</span>
-          <span v-if="item.count > 1" class="mention-count">{{ item.count }}</span>
-        </li>
-      </ul>
-    </div>
-
     <!-- ===== FOOTER ===== -->
     <div class="sidebar-footer" v-if="!collapsed">
       <div class="user-info">
@@ -323,23 +304,18 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNotebooksStore } from '@/stores/notebooks'
 import { useNotesStore } from '@/stores/notes'
 import { useTagsStore } from '@/stores/tags'
-import { useMentionsStore } from '@/stores/mentions'
 import TagManager from '@/components/TagManager.vue'
 
 const auth = useAuthStore()
 const notebooks = useNotebooksStore()
 const notesStore = useNotesStore()
 const tagsStore = useTagsStore()
-const mentionsStore = useMentionsStore()
 const router = useRouter()
-const route = useRoute()
-
-const isNoteRoute = computed(() => route.path.startsWith('/notes/'))
 
 const collapsed = ref(false)
 const sidebarView = ref('notebooks') // 'notebooks' | 'notes'
@@ -958,70 +934,4 @@ watch(() => auth.isLoggedIn, (v) => { if (v) tagsStore.fetch() }, { immediate: t
 .slide-right-enter-from { transform: translateX(-24px); opacity: 0; }
 .slide-right-leave-to  { transform: translateX(24px); opacity: 0; }
 
-/* ===== MENÇÕES ===== */
-.mentions-panel {
-  flex-shrink: 0;
-  border-top: 1px solid var(--border-soft);
-  padding: 8px 0 6px;
-  max-height: 210px;
-  overflow-y: auto;
-}
-
-.mentions-header {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 2px 14px 6px;
-}
-
-.mentions-at {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--purple-2);
-  line-height: 1;
-}
-
-.mentions-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 0 8px;
-}
-
-.mention-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background var(--transition);
-  gap: 6px;
-}
-.mention-item:hover { background: var(--panel-hover); }
-.mention-item:active { transform: scale(0.98); }
-
-.mention-chip {
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--purple-2);
-  background: rgba(245, 158, 11, 0.1);
-  border: 1px solid rgba(245, 158, 11, 0.22);
-  border-radius: 4px;
-  padding: 1px 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 140px;
-}
-
-.mention-count {
-  font-size: 10px;
-  color: var(--text-3);
-  background: var(--surface);
-  padding: 1px 6px;
-  border-radius: 99px;
-  flex-shrink: 0;
-}
 </style>
