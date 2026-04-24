@@ -165,6 +165,11 @@
       </div>
     </section>
 
+    <!-- ── Kanban Board ── -->
+    <section class="home-section home-section--kanban">
+      <HomeKanban />
+    </section>
+
     <!-- ── Empty (zero cadernos) ── -->
     <div v-if="notebooks.notebooks.length === 0 && !notebooks.loading" class="empty-home">
       <div class="empty-illustration">
@@ -193,6 +198,7 @@ import { useNotesStore } from '@/stores/notes'
 import { useTagsStore } from '@/stores/tags'
 import NoteCard from '@/components/NoteCard.vue'
 import TagManager from '@/components/TagManager.vue'
+import HomeKanban from '@/components/HomeKanban.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -378,6 +384,7 @@ onMounted(async () => {
 .home-view > .home-header { padding-top: 32px; }
 .home-view > .home-section:first-of-type { padding-top: 44px; }
 .home-view > .home-section { padding-bottom: 44px; }
+.home-view > .home-section--kanban { padding-bottom: 56px; }
 .home-view > .empty-home { padding-bottom: 60px; }
 
 /* ── Header ── */

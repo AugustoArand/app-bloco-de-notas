@@ -1500,13 +1500,132 @@ onBeforeUnmount(() => {
   margin: 20px 0 8px;
 }
 
-/* Lists */
-.tiptap-content :deep(ul), .tiptap-content :deep(ol) {
-  padding-left: 20px;
+/* Lists — base */
+.tiptap-content :deep(ul),
+.tiptap-content :deep(ol) {
   margin: 10px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  padding-left: 0;
+}
+
+/* Unordered list */
+.tiptap-content :deep(ul) {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.tiptap-content :deep(ul > li) {
+  position: relative;
+  padding-left: 20px;
+  margin: 4px 0;
+  line-height: 1.75;
+}
+
+.tiptap-content :deep(ul > li::before) {
+  content: '•';
+  position: absolute;
+  left: 4px;
+  top: 0;
+  color: var(--purple-2);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+/* Nested ul bullet styles */
+.tiptap-content :deep(ul ul > li::before) {
+  content: '◦';
+  color: var(--purple-1);
+  font-size: 14px;
+}
+
+.tiptap-content :deep(ul ul ul > li::before) {
+  content: '▸';
+  font-size: 11px;
+}
+
+/* Ordered list — counter hierarchy */
+.tiptap-content :deep(ol) {
+  list-style: none;
+  counter-reset: ol-level-1;
+  padding-left: 4px;
+}
+
+.tiptap-content :deep(ol > li) {
+  position: relative;
+  padding-left: 42px;
+  margin: 5px 0;
+  line-height: 1.75;
+  counter-increment: ol-level-1;
+}
+
+.tiptap-content :deep(ol > li::before) {
+  content: counter(ol-level-1) ".";
+  position: absolute;
+  left: 0;
+  top: 1px;
+  min-width: 28px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  color: var(--purple-3);
+  background: var(--purple-dim);
+  border: 1px solid var(--purple-1);
+  border-radius: 6px;
+  padding: 0 5px;
+  transition: background 0.2s ease, color 0.2s ease;
+  line-height: 1;
+}
+
+.tiptap-content :deep(ol > li:hover::before) {
+  background: var(--purple-1);
+  color: #fff;
+}
+
+/* Nested ol — second level */
+.tiptap-content :deep(ol ol) {
+  counter-reset: ol-level-2;
+  margin-top: 6px;
+  padding-left: 4px;
+}
+
+.tiptap-content :deep(ol ol > li) {
+  counter-increment: ol-level-2;
+  padding-left: 52px;
+}
+
+.tiptap-content :deep(ol ol > li::before) {
+  content: counter(ol-level-1) "." counter(ol-level-2);
+  min-width: 36px;
+  font-size: 11.5px;
+  border-radius: 5px;
+  color: var(--accent, #c084fc);
+  background: rgba(192, 132, 252, 0.08);
+  border-color: rgba(192, 132, 252, 0.22);
+}
+
+/* Nested ol — third level */
+.tiptap-content :deep(ol ol ol) {
+  counter-reset: ol-level-3;
+  margin-top: 4px;
+}
+
+.tiptap-content :deep(ol ol ol > li) {
+  counter-increment: ol-level-3;
+  padding-left: 62px;
+}
+
+.tiptap-content :deep(ol ol ol > li::before) {
+  content: counter(ol-level-1) "." counter(ol-level-2) "." counter(ol-level-3);
+  min-width: 44px;
+  font-size: 11px;
+  border-radius: 4px;
+  color: var(--text-2);
+  background: rgba(192, 132, 252, 0.05);
+  border-color: var(--border-soft);
 }
 
 /* Task list — estilos globais em main.css (NodeView gerado via JS) */
