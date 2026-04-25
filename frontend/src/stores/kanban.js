@@ -89,7 +89,8 @@ export const useKanbanStore = defineStore('kanban', {
             const { data } = await api.post(`/api/v1/kanban_boards/${boardId}/kanban_tasks`, {
                 kanban_task: {
                     title,
-                    description: String(payload?.description || '')
+                    description: String(payload?.description || ''),
+                    priority: payload?.priority || 'normal'
                 }
             })
 
@@ -105,6 +106,7 @@ export const useKanbanStore = defineStore('kanban', {
                 kanban_task: {
                     title: parsedTitle,
                     description: String(payload?.description || ''),
+                    priority: payload?.priority || 'normal',
                     kanban_board_id: boardId
                 }
             })
