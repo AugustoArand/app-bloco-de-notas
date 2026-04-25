@@ -11,9 +11,9 @@
     />
 
     <!-- Main editor area -->
-    <div class="editor-body">
-      <!-- Content (text mode) -->
-      <div class="editor-content-area" v-show="editorMode === 'text'">
+    <div class="editor-body" :class="{ 'editor-body--board': editorMode === 'board' }">
+      <!-- Content area (header always visible; content hidden in board mode) -->
+      <div class="editor-content-area" :class="{ 'editor-content-area--board': editorMode === 'board' }">
         <!-- Breadcrumb -->
         <nav class="note-breadcrumb" v-if="note">
           <router-link to="/" class="breadcrumb-link">
@@ -74,7 +74,7 @@
             </button>
           </div>
 
-          <!-- AI Panel -->
+          <!-- AI Panel (text mode only) -->
           <div class="ai-panel" v-if="editorMode === 'text'">
             <button class="ai-toggle" :class="{ open: aiPanelOpen }" @click="aiPanelOpen = !aiPanelOpen">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="color: var(--purple-2)">
@@ -167,8 +167,8 @@
             </div>
           </Transition>
 
-          <!-- Tags panel -->
-          <div class="note-tags-panel">
+          <!-- Tags panel (text mode only) -->
+          <div class="note-tags-panel" v-if="editorMode === 'text'">
             <TagBadge
               v-for="tag in note.tags"
               :key="tag.id"
@@ -198,8 +198,8 @@
           </div>
         </div>
 
-        <!-- Tiptap editor -->
-        <editor-content :editor="editor" class="tiptap-content" />
+        <!-- Tiptap editor (text mode only) -->
+        <editor-content v-show="editorMode === 'text'" :editor="editor" class="tiptap-content" />
 
       </div><!-- /editor-content-area -->
 
@@ -964,6 +964,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
+}
+
+/* Board mode: column layout so header sits above the canvas */
+.editor-body--board {
+  flex-direction: column;
 }
 
 .editor-content-area {
@@ -973,6 +979,19 @@ onBeforeUnmount(() => {
   max-width: 860px;
   margin: 0 auto;
   width: 100%;
+}
+
+/* In board mode: collapse to just show the note header (breadcrumb + title + mode btns) */
+.editor-content-area--board {
+  flex: 0 0 auto;
+  overflow: hidden;
+  overflow-y: visible;
+  padding: 16px 32px 10px;
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--panel);
 }
 
 /* ── Múltiplos quadros ── */
