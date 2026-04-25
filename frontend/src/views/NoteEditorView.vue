@@ -251,8 +251,8 @@
         />
       </div><!-- /boards-container -->
 
-      <!-- Table of Contents -->
-      <TableOfContents :editor="editor" />
+      <!-- Table of Contents (text mode only) -->
+      <TableOfContents v-if="editorMode === 'text'" :editor="editor" />
     </div><!-- /editor-body -->
   </div>
 
