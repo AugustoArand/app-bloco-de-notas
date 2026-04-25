@@ -2,7 +2,7 @@
   <NodeResizer
     :min-width="100"
     :min-height="60"
-    :is-visible="selected"
+    :is-visible="props.selected"
     :handle-style="{ width: '9px', height: '9px', borderRadius: '3px', background: '#fbbf24', border: '1.5px solid #d97706' }"
     :line-style="{ borderColor: '#fbbf24', borderWidth: '1px' }"
   />
@@ -29,42 +29,46 @@
       @keydown.enter.exact.stop.prevent="commitEdit"
       @keydown.escape.stop="cancelEdit"
     />
-    <span v-else class="pi-label">{{ data.label || 'Observação...' }}</span>
+    <span v-else class="pi-label">{{ props.data?.label || 'Observação...' }}</span>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { Handle, Position, useNode } from '@vue-flow/core'
+import { Handle, Position } from '@vue-flow/core'
 import { NodeResizer } from '@vue-flow/node-resizer'
 
-const { data, selected } = useNode()
-const emit = defineEmits(['update:data'])
+const props = defineProps({
+  id: { type: String, required: true },
+  data: { type: Object, default: () => ({}) },
+  selected: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update-data'])
 
 const editing = ref(false)
 const labelDraft = ref('')
 const textarea = ref(null)
 
 function startEdit() {
-  labelDraft.value = data.label || ''
+  labelDraft.value = props.data?.label || ''
   editing.value = true
   nextTick(() => textarea.value?.focus())
 }
 function commitEdit() {
-  if (editing.value) emit('update:data', { ...data, label: labelDraft.value || data.label })
+  if (editing.value) emit('update-data', { id: props.id, patch: { label: labelDraft.value || props.data?.label } })
   editing.value = false
 }
 function cancelEdit() { editing.value = false }
 
 const COLORS = {
-  yellow: { bg: '#fef9c3', border: '#fde047', accent: '#ca8a04' },
-  amber:  { bg: '#fef3c7', border: '#fbbf24', accent: '#d97706' },
-  lime:   { bg: '#ecfccb', border: '#bef264', accent: '#65a30d' },
-  cyan:   { bg: '#cffafe', border: '#67e8f9', accent: '#0891b2' },
-  pink:   { bg: '#fce7f3', border: '#f9a8d4', accent: '#be185d' },
-  purple: { bg: '#f3e8ff', border: '#d8b4fe', accent: '#7c3aed' },
+  yellow: { bg: '#fef9c3', border: '#fde047' },
+  amber:  { bg: '#fef3c7', border: '#fbbf24' },
+  lime:   { bg: '#ecfccb', border: '#bef264' },
+  cyan:   { bg: '#cffafe', border: '#67e8f9' },
+  pink:   { bg: '#fce7f3', border: '#f9a8d4' },
+  purple: { bg: '#f3e8ff', border: '#d8b4fe' },
 }
-const palette = computed(() => COLORS[data.postitColor || 'yellow'])
+const palette = computed(() => COLORS[props.data?.postitColor || 'yellow'] || COLORS.yellow)
 
 const innerStyle = computed(() => ({
   background: palette.value.bg,
