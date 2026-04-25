@@ -2,7 +2,7 @@
   <NodeResizer
     :min-width="160"
     :min-height="100"
-    :is-visible="selected"
+    :is-visible="props.selected"
     :handle-style="{ width: '10px', height: '10px', borderRadius: '3px', background: '#34d399', border: '1.5px solid #059669' }"
     :line-style="{ borderColor: '#34d399', borderWidth: '1px' }"
   />
@@ -24,35 +24,38 @@
         @keydown.escape.stop="cancelEdit"
         @click.stop
       />
-      <span v-else class="grp-title">{{ data.label || 'Grupo' }}</span>
+      <span v-else class="grp-title">{{ props.data?.label || 'Grupo' }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { useNode } from '@vue-flow/core'
 import { NodeResizer } from '@vue-flow/node-resizer'
 
-const { data, selected } = useNode()
-const emit = defineEmits(['update:data'])
+const props = defineProps({
+  id: { type: String, required: true },
+  data: { type: Object, default: () => ({}) },
+  selected: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update-data'])
 
 const editing = ref(false)
 const labelDraft = ref('')
 const inputEl = ref(null)
 
 function startEdit() {
-  labelDraft.value = data.label || 'Grupo'
+  labelDraft.value = props.data?.label || 'Grupo'
   editing.value = true
   nextTick(() => inputEl.value?.focus())
 }
 function commitEdit() {
-  if (editing.value) emit('update:data', { ...data, label: labelDraft.value.trim() || 'Grupo' })
+  if (editing.value) emit('update-data', { id: props.id, patch: { label: labelDraft.value.trim() || 'Grupo' } })
   editing.value = false
 }
 function cancelEdit() { editing.value = false }
 
-const accentColor = computed(() => data.groupColor || '#34d399')
+const accentColor = computed(() => props.data?.groupColor || '#34d399')
 
 const outerStyle = computed(() => ({
   width: '100%',

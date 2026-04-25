@@ -2,7 +2,7 @@
   <NodeResizer
     :min-width="80"
     :min-height="36"
-    :is-visible="selected"
+    :is-visible="props.selected"
     :handle-style="{ width: '10px', height: '10px', borderRadius: '3px', background: '#a78bfa', border: '1px solid #6366f1' }"
     :line-style="{ borderColor: '#6366f1', borderWidth: '1px' }"
   />
@@ -14,7 +14,7 @@
 
   <div
     class="box-inner"
-    :class="[`shape--${data.shape || 'rect'}`]"
+    :class="[`shape--${d.shape || 'rect'}`]"
     :style="innerStyle"
     @dblclick.stop="startEdit"
   >
@@ -27,32 +27,36 @@
       @keydown.enter.exact.stop.prevent="commitEdit"
       @keydown.escape.stop="cancelEdit"
     />
-    <span v-else class="box-label" :style="labelStyle">{{ data.label || 'Clique duplo' }}</span>
+    <span v-else class="box-label" :style="labelStyle">{{ d.label || 'Clique duplo' }}</span>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, nextTick } from 'vue'
-import { Handle, Position, useNode } from '@vue-flow/core'
+import { Handle, Position } from '@vue-flow/core'
 import { NodeResizer } from '@vue-flow/node-resizer'
 import '@vue-flow/node-resizer/dist/style.css'
 
-const { id, data, selected } = useNode()
-const emit = defineEmits(['update:data'])
+const props = defineProps({
+  id: { type: String, required: true },
+  data: { type: Object, default: () => ({}) },
+  selected: { type: Boolean, default: false },
+})
+const emit = defineEmits(['update-data'])
 
 const editing = ref(false)
 const labelDraft = ref('')
 const textarea = ref(null)
 
 function startEdit() {
-  labelDraft.value = data.label || ''
+  labelDraft.value = props.data?.label || ''
   editing.value = true
   nextTick(() => textarea.value?.focus())
 }
 
 function commitEdit() {
   if (editing.value) {
-    emit('update:data', { ...data, label: labelDraft.value.trim() || data.label })
+    emit('update-data', { id: props.id, patch: { label: labelDraft.value.trim() || props.data?.label } })
   }
   editing.value = false
 }
@@ -61,16 +65,18 @@ function cancelEdit() {
   editing.value = false
 }
 
+const d = computed(() => props.data || {})
+
 const innerStyle = computed(() => ({
-  background: data.bgColor || '#11111a',
-  borderColor: data.borderColor || 'rgba(159,103,255,0.45)',
-  borderStyle: data.borderStyle || 'solid',
-  borderWidth: data.borderWidth ? `${data.borderWidth}px` : '1.5px',
+  background: d.value.bgColor || '#11111a',
+  borderColor: d.value.borderColor || 'rgba(159,103,255,0.45)',
+  borderStyle: d.value.borderStyle || 'solid',
+  borderWidth: d.value.borderWidth ? `${d.value.borderWidth}px` : '1.5px',
   width: '100%',
   height: '100%',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: data.textAlign === 'left' ? 'flex-start' : data.textAlign === 'right' ? 'flex-end' : 'center',
+  justifyContent: d.value.textAlign === 'left' ? 'flex-start' : d.value.textAlign === 'right' ? 'flex-end' : 'center',
   padding: '8px 12px',
   boxSizing: 'border-box',
   cursor: 'default',
@@ -78,12 +84,12 @@ const innerStyle = computed(() => ({
 }))
 
 const labelStyle = computed(() => ({
-  color: data.color || '#e2e4f0',
-  fontSize: `${data.fontSize || 13}px`,
-  fontWeight: data.bold ? '700' : data.semibold ? '600' : '400',
-  fontStyle: data.italic ? 'italic' : 'normal',
-  textDecoration: data.underline ? 'underline' : 'none',
-  textAlign: data.textAlign || 'center',
+  color: d.value.color || '#e2e4f0',
+  fontSize: `${d.value.fontSize || 13}px`,
+  fontWeight: d.value.bold ? '700' : d.value.semibold ? '600' : '400',
+  fontStyle: d.value.italic ? 'italic' : 'normal',
+  textDecoration: d.value.underline ? 'underline' : 'none',
+  textAlign: d.value.textAlign || 'center',
   lineHeight: '1.4',
   wordBreak: 'break-word',
   whiteSpace: 'pre-wrap',

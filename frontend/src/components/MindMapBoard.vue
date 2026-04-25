@@ -101,7 +101,6 @@
     <!-- ══ Canvas + Inspector ══ -->
     <div class="mb-body">
       <VueFlow
-        ref="flowRef"
         v-model:nodes="nodes"
         v-model:edges="edges"
         class="mb-canvas"
@@ -116,6 +115,7 @@
         @node-drag-stop="onNodeMoved"
         @nodes-change="onNodesChange"
         @edges-change="onEdgesChange"
+        @update-data="onNodeDataChange"
       >
         <Background :variant="BackgroundVariant.Dots" :gap="24" :size="1.2" :color="'rgba(159,103,255,0.18)'" />
         <MiniMap
@@ -300,17 +300,28 @@ const edges = ref([])
 const flowRef = ref(null)
 const selectedNodeId = ref(null)
 
-// ── Sync props → state ─────────────────────────────────
+// ── Sync props → state (only when it actually changes from parent) ─────
+let syncLock = false
 function syncFromProps(value) {
+  if (syncLock) return
   nodes.value = Array.isArray(value?.nodes) ? value.nodes : []
   edges.value = Array.isArray(value?.edges) ? value.edges : []
 }
-watch(() => props.modelValue, syncFromProps, { immediate: true, deep: true })
+watch(() => props.modelValue, syncFromProps, { immediate: true, deep: false })
 
 // ── Sync state → parent ────────────────────────────────
 watch([nodes, edges], () => {
+  syncLock = true
   emit('update:modelValue', { nodes: nodes.value, edges: edges.value })
+  nextTick(() => { syncLock = false })
 }, { deep: true })
+
+// ── Handle data update from child nodes ────────────────
+function onNodeDataChange({ id, patch }) {
+  nodes.value = nodes.value.map(n =>
+    n.id === id ? { ...n, data: { ...n.data, ...patch } } : n
+  )
+}
 
 // ── Default edge options ────────────────────────────────
 const defaultEdgeOptions = {
