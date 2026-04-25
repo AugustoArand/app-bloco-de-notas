@@ -12,8 +12,8 @@
 
     <!-- Main editor area -->
     <div class="editor-body">
-      <!-- Content -->
-      <div class="editor-content-area">
+      <!-- Content (text mode) -->
+      <div class="editor-content-area" v-show="editorMode === 'text'">
         <!-- Breadcrumb -->
         <nav class="note-breadcrumb" v-if="note">
           <router-link to="/" class="breadcrumb-link">
@@ -199,60 +199,61 @@
         </div>
 
         <!-- Tiptap editor -->
-        <editor-content v-if="editorMode === 'text'" :editor="editor" class="tiptap-content" />
+        <editor-content :editor="editor" class="tiptap-content" />
 
-        <!-- Quadros -->
-        <div v-else class="boards-container">
-          <div class="boards-tabs">
-            <div
-              v-for="board in boards"
-              :key="board.id"
-              class="board-tab"
-              :class="{ active: activeBoardId === board.id }"
-              @click="selectBoard(board.id)"
-            >
-              <span
-                v-if="editingBoardId !== board.id"
-                class="board-tab-name"
-                @dblclick.stop="startEditBoardTitle(board)"
-                :title="'Duplo clique para renomear'"
-              >{{ board.title }}</span>
-              <input
-                v-else
-                v-model="editingBoardTitle"
-                class="board-tab-input"
-                ref="boardTitleInput"
-                @blur="saveBoardTitle(board.id)"
-                @keyup.enter="saveBoardTitle(board.id)"
-                @click.stop
-              />
-              <button
-                v-if="boards.length > 1"
-                class="board-tab-close"
-                @click.stop="removeBoard(board.id)"
-                title="Remover quadro"
-              >×</button>
-            </div>
-            <button class="board-tab-add" @click="addBoard" title="Novo quadro">
-              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Quadro
-            </button>
+      </div><!-- /editor-content-area -->
+
+      <!-- Quadros — sibling of editor-content-area, inside editor-body -->
+      <div v-if="editorMode === 'board'" class="boards-container">
+        <div class="boards-tabs">
+          <div
+            v-for="board in boards"
+            :key="board.id"
+            class="board-tab"
+            :class="{ active: activeBoardId === board.id }"
+            @click="selectBoard(board.id)"
+          >
+            <span
+              v-if="editingBoardId !== board.id"
+              class="board-tab-name"
+              @dblclick.stop="startEditBoardTitle(board)"
+              :title="'Duplo clique para renomear'"
+            >{{ board.title }}</span>
+            <input
+              v-else
+              v-model="editingBoardTitle"
+              class="board-tab-input"
+              ref="boardTitleInput"
+              @blur="saveBoardTitle(board.id)"
+              @keyup.enter="saveBoardTitle(board.id)"
+              @click.stop
+            />
+            <button
+              v-if="boards.length > 1"
+              class="board-tab-close"
+              @click.stop="removeBoard(board.id)"
+              title="Remover quadro"
+            >×</button>
           </div>
-
-          <MindMapBoard
-            v-if="activeBoard"
-            :key="activeBoardId"
-            :model-value="{ nodes: activeBoard.nodes, edges: activeBoard.edges }"
-            @update:model-value="handleBoardUpdate"
-          />
+          <button class="board-tab-add" @click="addBoard" title="Novo quadro">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Quadro
+          </button>
         </div>
-      </div>
+
+        <MindMapBoard
+          v-if="activeBoard"
+          :key="activeBoardId"
+          :model-value="{ nodes: activeBoard.nodes, edges: activeBoard.edges }"
+          @update:model-value="handleBoardUpdate"
+        />
+      </div><!-- /boards-container -->
 
       <!-- Table of Contents -->
       <TableOfContents :editor="editor" />
-    </div>
+    </div><!-- /editor-body -->
   </div>
 
   <!-- Loading state -->

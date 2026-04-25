@@ -652,6 +652,7 @@ const groupColors = [
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 500px;
   background: var(--surface, #0d0d1a);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg, 12px);
@@ -733,6 +734,7 @@ const groupColors = [
 .mb-body {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   position: relative;
 }
@@ -740,9 +742,15 @@ const groupColors = [
 /* ── Canvas ── */
 .mb-canvas {
   flex: 1;
+  min-width: 0;
   height: 100%;
   background: radial-gradient(circle at 1px 1px, rgba(159,103,255,0.15) 1px, transparent 0);
   background-size: 24px 24px;
+}
+
+/* VueFlow must have explicit height on its root wrapper */
+:deep(.vue-flow) {
+  height: 100% !important;
 }
 
 /* ── Inspector ── */
