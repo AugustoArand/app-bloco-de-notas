@@ -129,9 +129,33 @@
               @dragover.prevent="onTaskDragOver(board.id, taskIndex)"
               @drop.prevent="onTaskDrop(board.id, taskIndex)"
             >
-              <!-- Priority chip (based on position in board) -->
+              <!-- Priority chip (clickable quick-change) -->
               <div class="hk-card-top">
-                <span class="hk-priority" :class="priorityClass(taskIndex)">{{ priorityLabel(taskIndex) }}</span>
+                <div class="hk-priority-wrap" @click.stop>
+                  <button
+                    class="hk-priority"
+                    :class="priorityClass(task.priority)"
+                    @click="togglePriorityMenu(task.id)"
+                    :title="'Prioridade: ' + priorityLabel(task.priority)"
+                  >
+                    <span class="hk-priority-dot"></span>
+                    {{ priorityLabel(task.priority) }}
+                    <svg width="8" height="8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="opacity:0.7"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div v-if="priorityMenuTaskId === task.id" class="hk-priority-menu">
+                    <button
+                      v-for="p in PRIORITIES"
+                      :key="p.value"
+                      class="hk-priority-option"
+                      :class="{ 'hk-priority-option--active': task.priority === p.value }"
+                      @click="setTaskPriority(board.id, task, p.value)"
+                    >
+                      <span class="hk-priority-option-dot" :style="{ background: p.color }"></span>
+                      {{ p.label }}
+                      <svg v-if="task.priority === p.value" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="margin-left:auto"><polyline points="20 6 9 17 4 12"/></svg>
+                    </button>
+                  </div>
+                </div>
                 <span class="hk-card-board-tag">{{ board.title }}</span>
               </div>
 
@@ -279,6 +303,25 @@
               placeholder="Descreva os detalhes, critérios de aceite, observações..."
             ></textarea>
 
+            <!-- Priority selector -->
+            <div>
+              <label class="hk-label">Prioridade</label>
+              <div class="hk-priority-picker">
+                <button
+                  v-for="p in PRIORITIES"
+                  :key="p.value"
+                  type="button"
+                  class="hk-priority-pick-btn"
+                  :class="{ 'hk-priority-pick-btn--active': taskPriority === p.value }"
+                  :style="taskPriority === p.value ? { borderColor: p.color, color: p.color, background: p.color + '22' } : {}"
+                  @click="taskPriority = p.value"
+                >
+                  <span class="hk-priority-option-dot" :style="{ background: p.color }"></span>
+                  {{ p.label }}
+                </button>
+              </div>
+            </div>
+
             <!-- Board selector (when creating from section header) -->
             <div v-if="taskModalMode === 'create' && kanban.boards.length > 1">
               <label class="hk-label" for="hk-task-board">Board de destino</label>
@@ -406,14 +449,40 @@ const showTaskModal = ref(false)
 const taskModalMode = ref('create')
 const taskTitle = ref('')
 const taskDescription = ref('')
+const taskPriority = ref('normal')
 const taskError = ref('')
 const taskBoardId = ref(null)
 const editingTaskId = ref(null)
+
+// Priority quick-change menu
+const priorityMenuTaskId = ref(null)
+
+const PRIORITIES = [
+  { value: 'high',   label: 'Alta',   color: '#f87171' },
+  { value: 'mid',    label: 'Média',  color: '#fbbf24' },
+  { value: 'normal', label: 'Normal', color: '#60a5fa' },
+]
+
+function togglePriorityMenu(taskId) {
+  priorityMenuTaskId.value = priorityMenuTaskId.value === taskId ? null : taskId
+}
+
+async function setTaskPriority(boardId, task, priority) {
+  priorityMenuTaskId.value = null
+  if (task.priority === priority) return
+  await kanban.updateTask(boardId, task.id, { title: task.title, description: task.description || '', priority })
+}
+
+// Close priority menu when clicking outside
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', () => { priorityMenuTaskId.value = null })
+}
 
 function openCreateTaskModal(boardId) {
   taskModalMode.value = 'create'
   taskTitle.value = ''
   taskDescription.value = ''
+  taskPriority.value = 'normal'
   taskError.value = ''
   taskBoardId.value = boardId
   editingTaskId.value = null
@@ -426,6 +495,7 @@ function openEditTaskModal(boardId, task) {
   editingTaskId.value = task.id
   taskTitle.value = task.title
   taskDescription.value = task.description || ''
+  taskPriority.value = task.priority || 'normal'
   taskError.value = ''
   showTaskModal.value = true
 }
@@ -438,9 +508,9 @@ async function submitTaskModal() {
   if (!taskBoardId.value) { taskError.value = 'Selecione um board.'; return }
   try {
     if (taskModalMode.value === 'create') {
-      await kanban.createTask(taskBoardId.value, { title: parsed, description: taskDescription.value })
+      await kanban.createTask(taskBoardId.value, { title: parsed, description: taskDescription.value, priority: taskPriority.value })
     } else {
-      await kanban.updateTask(taskBoardId.value, editingTaskId.value, { title: parsed, description: taskDescription.value })
+      await kanban.updateTask(taskBoardId.value, editingTaskId.value, { title: parsed, description: taskDescription.value, priority: taskPriority.value })
     }
     closeTaskModal()
   } catch { taskError.value = 'Não foi possível salvar a tarefa.' }
@@ -528,15 +598,15 @@ function colProgress(boardIndex) {
 const ACCENTS = ['#c084fc', '#60a5fa', '#34d399', '#fbbf24', '#f87171', '#a78bfa']
 function boardAccent(i) { return ACCENTS[i % ACCENTS.length] }
 
-// Priority label based on card index (0 = alta, last = baixa)
-function priorityLabel(idx) {
-  if (idx === 0) return 'Alta'
-  if (idx === 1) return 'Média'
+// Priority label/class based on task.priority field
+function priorityLabel(priority) {
+  if (priority === 'high') return 'Alta'
+  if (priority === 'mid') return 'Média'
   return 'Normal'
 }
-function priorityClass(idx) {
-  if (idx === 0) return 'hk-priority--high'
-  if (idx === 1) return 'hk-priority--mid'
+function priorityClass(priority) {
+  if (priority === 'high') return 'hk-priority--high'
+  if (priority === 'mid') return 'hk-priority--mid'
   return 'hk-priority--low'
 }
 
@@ -872,30 +942,122 @@ function formatDate(dateStr) {
   margin-bottom: 8px;
 }
 
+/* Priority wrap for relative positioning */
+.hk-priority-wrap {
+  position: relative;
+}
+
 .hk-priority {
   display: inline-flex;
   align-items: center;
-  padding: 2px 7px;
+  gap: 4px;
+  padding: 2px 6px 2px 5px;
   border-radius: 5px;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  font-family: inherit;
+  transition: all 0.15s ease;
 }
+.hk-priority:hover { filter: brightness(1.15); transform: scale(1.03); }
+
+.hk-priority-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: currentColor;
+  opacity: 0.85;
+}
+
 .hk-priority--high {
   background: rgba(248,113,113,0.14);
   color: #f87171;
-  border: 1px solid rgba(248,113,113,0.28);
+  border-color: rgba(248,113,113,0.28);
 }
 .hk-priority--mid {
   background: rgba(251,191,36,0.12);
   color: #fbbf24;
-  border: 1px solid rgba(251,191,36,0.25);
+  border-color: rgba(251,191,36,0.25);
 }
 .hk-priority--low {
   background: rgba(96,165,250,0.1);
   color: #60a5fa;
-  border: 1px solid rgba(96,165,250,0.22);
+  border-color: rgba(96,165,250,0.22);
 }
+
+/* Priority dropdown menu */
+.hk-priority-menu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 200;
+  background: var(--panel, #1a1a2e);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 5px;
+  min-width: 130px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: hk-fadeIn 0.1s ease;
+}
+
+.hk-priority-option {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.12s ease;
+  text-align: left;
+  width: 100%;
+}
+.hk-priority-option:hover { background: var(--surface); color: var(--text); }
+.hk-priority-option--active { color: var(--text); font-weight: 600; }
+
+.hk-priority-option-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Priority picker (inside modal) */
+.hk-priority-picker {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hk-priority-pick-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-2);
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex: 1;
+  justify-content: center;
+}
+.hk-priority-pick-btn:hover { border-color: var(--border); color: var(--text); background: var(--surface); }
+.hk-priority-pick-btn--active { font-weight: 700; }
 
 .hk-card-board-tag {
   font-size: 10px;

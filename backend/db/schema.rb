@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_20_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_25_022320) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_20_000000) do
     t.text "description", default: ""
     t.integer "kanban_board_id", null: false
     t.integer "position", default: 0, null: false
+    t.string "priority", default: "normal", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.index ["archived_at"], name: "index_kanban_tasks_on_archived_at"

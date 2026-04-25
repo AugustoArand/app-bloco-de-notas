@@ -87,6 +87,7 @@ module Api
           id: task.id,
           title: task.title,
           description: task.description,
+          priority: task.priority || 'normal',
           position: task.position,
           kanban_board_id: task.kanban_board_id,
           created_at: task.created_at,
